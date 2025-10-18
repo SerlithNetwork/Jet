@@ -38,3 +38,10 @@ out/
 
 ### Kotlin ###
 .kotlin
+
+### Flare ###
+/logs/**
+tokens.yml
+**.log
+src/generated/
+application.properties
