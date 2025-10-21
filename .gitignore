@@ -41,7 +41,9 @@ out/
 
 ### Flare ###
 /logs/**
+/logs
 tokens.yml
 **.log
 src/generated/
 application.properties
+/jet.db

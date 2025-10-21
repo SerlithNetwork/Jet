@@ -1,65 +1,47 @@
 package net.serlith.jet.controller
 
-import co.technove.flare.proto.ProfilerFileProto
 import jakarta.servlet.http.HttpServletRequest
-import net.serlith.jet.service.TokenService
-import net.serlith.jet.types.CreateProfileResponse
-import net.serlith.jet.util.randomAlphanumeric
+import net.serlith.jet.database.repository.FlareProfileRepository
+import net.serlith.jet.types.FlareProfileResponse
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpHeaders
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import java.util.zip.GZIPInputStream
+import kotlin.jvm.optionals.getOrNull
 
 @RestController
 @RequestMapping("/api")
 class ApiController (
-    private val tokenService: TokenService,
+    private val flareRepository: FlareProfileRepository,
 ) {
 
     private final val logger = LoggerFactory.getLogger(ApiController::class.java)
-    private final val ok: ResponseEntity<String> = ResponseEntity.ok("{}")
 
-    @PostMapping("/create")
-    fun createProfile(
+    @GetMapping("/profiler/active/{key}")
+    fun isProfilerActive(
+        @PathVariable key: String,
+    ): ResponseEntity<Boolean> {
+        this.logger.info("Requested if profiler for $key is active")
+        return ResponseEntity.ok(true)
+    }
+
+    @GetMapping("/profiler/{key}")
+    fun requestProfiler(
         request: HttpServletRequest,
-        @RequestBody data: ByteArray
-    ): ResponseEntity<CreateProfileResponse> {
+        @PathVariable key: String,
+    ): ResponseEntity<FlareProfileResponse> {
 
-        val create = GZIPInputStream(data.inputStream()).use { gzip ->
-            ProfilerFileProto.CreateProfile.parseFrom(gzip)
-        }
+        val flare = this.flareRepository.findById(key).getOrNull() ?: return ResponseEntity.notFound().build()
+        val response = FlareProfileResponse(
+            raw = flare.raw,
+            dataSamples = flare.dataSamples.map { s -> s.raw },
+            timelineSamples = flare.timelineSamples.map { s -> s.raw },
+        )
+        this.logger.info("Requested profile from ${request.remoteAddr}:${request.remotePort}")
 
-        val id = String.randomAlphanumeric(12)
-        val token = request.getHeader(HttpHeaders.AUTHORIZATION)
-        val user = this.tokenService.getOwner(token) ?: "Unknown" // Security Configuration should handle this always exists
-
-        // Store profile
-        // Store data
-
-        this.logger.info("User {} created new profile '{}' for instance at {}:{}", user, id, request.remoteAddr, request.remotePort)
-
-        return ResponseEntity.ok(CreateProfileResponse(id, token))
-    }
-
-    @PostMapping("/data/{id}")
-    fun submitData(
-        @PathVariable id: String,
-        @RequestBody data: ByteArray,
-    ): ResponseEntity<String> {
-        return this.ok
-    }
-
-    @PostMapping("/timeline/{id}")
-    fun submitTimeline(
-        @PathVariable id: String,
-        @RequestBody data: ByteArray,
-    ): ResponseEntity<String> {
-        return this.ok
+        return ResponseEntity.ok(response)
     }
 
 }
