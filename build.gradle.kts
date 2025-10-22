@@ -44,7 +44,7 @@ dependencies {
 
     runtimeOnly("com.zaxxer:HikariCP:6.2.1")
     runtimeOnly("com.mysql:mysql-connector-j:9.2.0")
-    runtimeOnly("org.xerial:sqlite-jdbc:3.50.3.0")
+    runtimeOnly("com.h2database:h2:2.4.240")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")

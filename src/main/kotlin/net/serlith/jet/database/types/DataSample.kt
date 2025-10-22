@@ -1,7 +1,7 @@
 package net.serlith.jet.database.types
 
+import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
@@ -18,11 +18,12 @@ class DataSample {
     @GeneratedValue(strategy = GenerationType.AUTO)
     var id: Long = 0
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "key", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "profile_key", nullable = false)
     lateinit var profile: FlareProfile
 
     @Lob
+    @Column(name = "raw", nullable = false)
     lateinit var raw: ByteArray
 
 }

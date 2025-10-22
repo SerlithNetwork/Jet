@@ -172,7 +172,9 @@ class RootController (
         return hash256.toHexString() == hash
     }
 
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
+    // Probably drop this shit and move it back into their own transactional functions
+    // I'm not sure yet, H2 doesn't seem to need this compared to SQLite
+    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.SECONDS)
     fun flushToDatabase() {
         val dataList = mutableListOf<Pair<String, ByteArray>>()
         val timelineList = mutableListOf<Pair<String, ByteArray>>()
@@ -186,10 +188,12 @@ class RootController (
             timelineList.add(timeline)
         }
 
-        this.profileService.pushToDatabase(
-            dataList.groupBy({ it.first }, { it.second }),
-            timelineList.groupBy({ it.first }, { it.second }),
-        )
+        if (dataList.isNotEmpty() || timelineList.isNotEmpty()) {
+            this.profileService.pushToDatabase(
+                dataList.groupBy({ it.first }, { it.second }),
+                timelineList.groupBy({ it.first }, { it.second }),
+            )
+        }
     }
 
 }

@@ -46,5 +46,6 @@ tokens.yml
 **.log
 src/generated/
 application.properties
-/jet.db
+/jetdb.mv.db
+/jetdb.trace.db
 /application.properties

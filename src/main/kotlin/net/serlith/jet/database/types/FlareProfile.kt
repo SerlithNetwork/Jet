@@ -4,6 +4,7 @@ import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
+import jakarta.persistence.Lob
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.springframework.data.annotation.CreatedDate
@@ -14,10 +15,11 @@ import java.time.LocalDateTime
 class FlareProfile {
 
     @Id
-    @Column(name = "key", nullable = false)
+    @Column(name = "profile_key", nullable = false)
     var key: String = ""
 
-    @Column(name = "name", nullable = false)
+    @Lob
+    @Column(name = "raw", nullable = false)
     lateinit var raw: ByteArray
 
     @OneToMany(mappedBy = "profile", cascade = [CascadeType.ALL], orphanRemoval = true)
