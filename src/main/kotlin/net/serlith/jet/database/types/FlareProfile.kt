@@ -28,6 +28,6 @@ class FlareProfile {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false)
-    lateinit var createdAt: LocalDateTime
+    var createdAt: LocalDateTime = LocalDateTime.now()
 
 }

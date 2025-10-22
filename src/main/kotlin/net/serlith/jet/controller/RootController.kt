@@ -72,13 +72,13 @@ class RootController (
             }
         )
         this.keys.put(key, true)
-        this.logger.info("User '$user' created new profile '$key' for instance at ${request.remoteAddr}:${request.remotePort}")
+        this.logger.info("User '$user' created a new profile '$key' for instance at ${request.remoteAddr}:${request.remotePort}")
 
         val hash = this.sha256.digest("$token:$key".toByteArray())
         return ResponseEntity.ok(
             CreateProfileResponse(
-                id = Base64.getEncoder().encodeToString(hash),
-                key = key,
+                id = key,
+                key = Base64.getEncoder().encodeToString(hash),
             )
         )
     }
@@ -97,18 +97,18 @@ class RootController (
     @PostMapping("/{id}/{key}")
     fun postData(
         request: HttpServletRequest,
-        @PathVariable id: String,
-        @PathVariable key: String,
+        @PathVariable("id") key: String,
+        @PathVariable("key") hash: String,
         @RequestBody data: ByteArray,
     ) : ResponseEntity<String> {
 
         // Users cannot submit data to other user's session
-        if (!this.ownsSession(request, key, id)) {
+        if (!this.ownsSession(request, hash, key)) {
             return this.badRequest
         }
 
         // Profiler should not be allowed to be alive more than 20 minutes
-        if (this.keys.getIfPresent(key) != true) {
+        if (this.keys.getIfPresent(hash) != true) {
             return this.notFound
         }
 
@@ -121,28 +121,28 @@ class RootController (
         }
 
         // Refresh WebSocket sessions
-        this.wsHandler.broadcastData(key, data)
+        this.wsHandler.broadcastData(hash, data)
 
         // Store data
-        this.profileService.pushData(key, data)
+        this.profileService.pushData(hash, data)
         return this.ok
     }
 
     @PostMapping("/{id}/{key}/timeline")
     fun postTimeline(
         request: HttpServletRequest,
-        @PathVariable id: String,
-        @PathVariable key: String,
+        @PathVariable("id") key: String,
+        @PathVariable("key") hash: String,
         @RequestBody data: ByteArray,
     ) : ResponseEntity<String> {
 
         // Users cannot submit data to other user's session
-        if (!this.ownsSession(request, key, id)) {
+        if (!this.ownsSession(request, hash, key)) {
             return this.badRequest
         }
 
         // Profiler should not be allowed to be alive more than 20 minutes
-        if (this.keys.getIfPresent(key) != true) {
+        if (this.keys.getIfPresent(hash) != true) {
             return this.notFound
         }
 
@@ -155,17 +155,17 @@ class RootController (
         }
 
         // Refresh WebSocket sessions
-        this.wsHandler.broadcastTimeline(key, data)
+        this.wsHandler.broadcastTimeline(hash, data)
 
         // Store timeline
-        this.profileService.pushTimeline(key, data)
+        this.profileService.pushTimeline(hash, data)
         return this.ok
     }
 
-    private final fun ownsSession(request: HttpServletRequest, key: String, id: String): Boolean {
+    private final fun ownsSession(request: HttpServletRequest, hash: String, key: String): Boolean {
         val token = request.getHeader("Authorization").removePrefix("token ")
-        val hash = this.sha256.digest("$token:$key".toByteArray())
-        return Base64.getEncoder().encodeToString(hash) == id
+        val hash256 = this.sha256.digest("$token:$key".toByteArray())
+        return Base64.getEncoder().encodeToString(hash256) == hash
     }
 
 }
