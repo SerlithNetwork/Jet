@@ -8,7 +8,6 @@ import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.types.FlareProfile
 import net.serlith.jet.server.SampleWebSocketHandler
 import net.serlith.jet.service.ProfileService
-import net.serlith.jet.service.SessionService
 import net.serlith.jet.service.TokenService
 import net.serlith.jet.types.CreateProfileResponse
 import net.serlith.jet.util.randomAlphanumeric
@@ -31,7 +30,6 @@ class RootController (
     private val flareRepository: FlareProfileRepository,
     private val profileService: ProfileService,
     private val wsHandler: SampleWebSocketHandler,
-    private val sessionService: SessionService,
 ) {
 
     private final val logger = LoggerFactory.getLogger(RootController::class.java)
@@ -122,10 +120,10 @@ class RootController (
             return this.badRequest
         }
 
-        // Refresh WebSocket sessions and cache
-        this.wsHandler.broadcast(key, "data", data)
-        this.sessionService.putData(key, data)
+        // Refresh WebSocket sessions
+        this.wsHandler.broadcastData(key, data)
 
+        // Store data
         this.profileService.pushData(key, data)
         return this.ok
     }
@@ -156,10 +154,10 @@ class RootController (
             return this.badRequest
         }
 
-        // Refresh WebSocket sessions and cache
-        this.wsHandler.broadcast(key, "timeline", data)
-        this.sessionService.putTimeline(key, data)
+        // Refresh WebSocket sessions
+        this.wsHandler.broadcastTimeline(key, data)
 
+        // Store timeline
         this.profileService.pushTimeline(key, data)
         return this.ok
     }

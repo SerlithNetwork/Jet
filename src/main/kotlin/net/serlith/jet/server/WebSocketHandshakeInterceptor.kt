@@ -1,6 +1,5 @@
 package net.serlith.jet.server
 
-import net.serlith.jet.service.SessionService
 import org.springframework.http.HttpStatus
 import org.springframework.http.server.ServerHttpRequest
 import org.springframework.http.server.ServerHttpResponse
@@ -11,7 +10,7 @@ import java.lang.Exception
 
 @Component
 class WebSocketHandshakeInterceptor (
-    private val sessionService: SessionService,
+    private val handler: SampleWebSocketHandler,
 ) : HandshakeInterceptor {
 
     override fun beforeHandshake(
@@ -28,7 +27,7 @@ class WebSocketHandshakeInterceptor (
         }?.firstOrNull()
 
         // Reject WS connection if the profiler is not live
-        if (key == null || !this.sessionService.isAlive(key)) {
+        if (key == null || !this.handler.isProfilerLive(key)) {
             response.setStatusCode(HttpStatus.FORBIDDEN)
             return false
         }
