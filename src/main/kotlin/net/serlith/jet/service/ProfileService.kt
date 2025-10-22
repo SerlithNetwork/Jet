@@ -20,29 +20,35 @@ class ProfileService (
     private var cleanupDays: Long = 0
 
     @Transactional
-    fun pushData(key: String, raw: ByteArray): Boolean {
-        val flare = this.flareRepository.findById(key).getOrNull() ?: return false
-        flare.dataSamples.add(
-            DataSample().apply {
-                this.profile = flare
-                this.raw = raw
-            }
-        )
-        this.flareRepository.save(flare)
-        return true
-    }
+    fun pushToDatabase(
+        dataMap: Map<String, List<ByteArray>>,
+        timelineMap: Map<String, List<ByteArray>>,
+    ) {
+        val flareIds = dataMap.keys + timelineMap.keys
+        val flares = flareRepository.findAllById(flareIds).associateBy { it.key }
 
-    @Transactional
-    fun pushTimeline(key: String, raw: ByteArray): Boolean {
-        val flare = this.flareRepository.findById(key).getOrNull() ?: return false
-        flare.timelineSamples.add(
-            TimelineSample().apply {
-                this.profile = flare
-                this.raw = raw
+        dataMap.forEach { (key, raws) ->
+            val flare = flares[key] ?: return@forEach
+            val samples = raws.map { raw ->
+                DataSample().apply {
+                    this.profile = flare
+                    this.raw = raw
+                }
             }
-        )
-        this.flareRepository.save(flare)
-        return true
+            flare.dataSamples.addAll(samples)
+        }
+        timelineMap.forEach { (key, raws) ->
+            val flare = flares[key] ?: return@forEach
+            val samples = raws.map { raw ->
+                TimelineSample().apply {
+                    this.profile = flare
+                    this.raw = raw
+                }
+            }
+            flare.timelineSamples.addAll(samples)
+        }
+
+        this.flareRepository.saveAll(flares.values)
     }
 
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)

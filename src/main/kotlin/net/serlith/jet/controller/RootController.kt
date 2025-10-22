@@ -13,6 +13,7 @@ import net.serlith.jet.types.CreateProfileResponse
 import net.serlith.jet.util.randomAlphanumeric
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import java.io.IOException
 import java.security.MessageDigest
-import java.util.Base64
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
@@ -37,6 +38,9 @@ class RootController (
     private final val notFound = ResponseEntity.notFound().build<String>()
     private final val badRequest = ResponseEntity.badRequest().build<String>()
     private final val sha256 = MessageDigest.getInstance("SHA-256")
+
+    private final val dataQueue = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
+    private final val timelineQueue = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
 
     private final val keys: Cache<String, Boolean> = Caffeine.newBuilder()
         .expireAfterAccess(20, TimeUnit.MINUTES)
@@ -78,7 +82,7 @@ class RootController (
         return ResponseEntity.ok(
             CreateProfileResponse(
                 id = key,
-                key = Base64.getEncoder().encodeToString(hash),
+                key = hash.toHexString(),
             )
         )
     }
@@ -108,7 +112,7 @@ class RootController (
         }
 
         // Profiler should not be allowed to be alive more than 20 minutes
-        if (this.keys.getIfPresent(hash) != true) {
+        if (this.keys.getIfPresent(key) != true) {
             return this.notFound
         }
 
@@ -121,10 +125,10 @@ class RootController (
         }
 
         // Refresh WebSocket sessions
-        this.wsHandler.broadcastData(hash, data)
+        this.wsHandler.broadcastData(key, data)
 
         // Store data
-        this.profileService.pushData(hash, data)
+        this.dataQueue.add(Pair(key, data))
         return this.ok
     }
 
@@ -142,7 +146,7 @@ class RootController (
         }
 
         // Profiler should not be allowed to be alive more than 20 minutes
-        if (this.keys.getIfPresent(hash) != true) {
+        if (this.keys.getIfPresent(key) != true) {
             return this.notFound
         }
 
@@ -155,17 +159,37 @@ class RootController (
         }
 
         // Refresh WebSocket sessions
-        this.wsHandler.broadcastTimeline(hash, data)
+        this.wsHandler.broadcastTimeline(key, data)
 
         // Store timeline
-        this.profileService.pushTimeline(hash, data)
+        this.timelineQueue.add(Pair(key, data))
         return this.ok
     }
 
     private final fun ownsSession(request: HttpServletRequest, hash: String, key: String): Boolean {
         val token = request.getHeader("Authorization").removePrefix("token ")
         val hash256 = this.sha256.digest("$token:$key".toByteArray())
-        return Base64.getEncoder().encodeToString(hash256) == hash
+        return hash256.toHexString() == hash
+    }
+
+    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.MINUTES)
+    fun flushToDatabase() {
+        val dataList = mutableListOf<Pair<String, ByteArray>>()
+        val timelineList = mutableListOf<Pair<String, ByteArray>>()
+
+        while (true) {
+            val data = dataQueue.poll() ?: break
+            dataList.add(data)
+        }
+        while (true) {
+            val timeline = timelineQueue.poll() ?: break
+            timelineList.add(timeline)
+        }
+
+        this.profileService.pushToDatabase(
+            dataList.groupBy({ it.first }, { it.second }),
+            timelineList.groupBy({ it.first }, { it.second }),
+        )
     }
 
 }
