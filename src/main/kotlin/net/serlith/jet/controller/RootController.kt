@@ -1,10 +1,14 @@
 package net.serlith.jet.controller
 
 import co.technove.flare.proto.ProfilerFileProto
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import jakarta.servlet.http.HttpServletRequest
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.types.FlareProfile
+import net.serlith.jet.server.SampleWebSocketHandler
 import net.serlith.jet.service.ProfileService
+import net.serlith.jet.service.SessionService
 import net.serlith.jet.service.TokenService
 import net.serlith.jet.types.CreateProfileResponse
 import net.serlith.jet.util.randomAlphanumeric
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController
 import java.io.IOException
 import java.security.MessageDigest
 import java.util.Base64
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 @RestController
@@ -25,6 +30,8 @@ class RootController (
     private val tokenService: TokenService,
     private val flareRepository: FlareProfileRepository,
     private val profileService: ProfileService,
+    private val wsHandler: SampleWebSocketHandler,
+    private val sessionService: SessionService,
 ) {
 
     private final val logger = LoggerFactory.getLogger(RootController::class.java)
@@ -33,13 +40,16 @@ class RootController (
     private final val badRequest = ResponseEntity.badRequest().build<String>()
     private final val sha256 = MessageDigest.getInstance("SHA-256")
 
+    private final val keys: Cache<String, Boolean> = Caffeine.newBuilder()
+        .expireAfterAccess(20, TimeUnit.MINUTES)
+        .build()
+
     @PostMapping("/create")
     fun postCreate(
         request: HttpServletRequest,
         @RequestBody data: ByteArray,
     ): ResponseEntity<CreateProfileResponse> {
 
-        val key = String.randomAlphanumeric(12)
         val token = request.getHeader("Authorization").removePrefix("token ")
         val user = this.tokenService.getOwner(token) ?: "Unknown"
 
@@ -52,12 +62,18 @@ class RootController (
             return ResponseEntity.badRequest().build()
         }
 
+        var key = String.randomAlphanumeric(12)
+        val keys = this.flareRepository.getAllKeys()
+        while (key in keys) {
+            key = String.randomAlphanumeric(13)
+        }
         this.flareRepository.save(
             FlareProfile().apply {
-                this.key = token
+                this.key = key
                 this.raw = data
             }
         )
+        this.keys.put(key, true)
         this.logger.info("User '$user' created new profile '$key' for instance at ${request.remoteAddr}:${request.remotePort}")
 
         val hash = this.sha256.digest("$token:$key".toByteArray())
@@ -81,15 +97,21 @@ class RootController (
     }
 
     @PostMapping("/{id}/{key}")
-    fun postAirplane(
+    fun postData(
         request: HttpServletRequest,
         @PathVariable id: String,
         @PathVariable key: String,
         @RequestBody data: ByteArray,
     ) : ResponseEntity<String> {
 
+        // Users cannot submit data to other user's session
         if (!this.ownsSession(request, key, id)) {
             return this.badRequest
+        }
+
+        // Profiler should not be allowed to be alive more than 20 minutes
+        if (this.keys.getIfPresent(key) != true) {
+            return this.notFound
         }
 
         try {
@@ -99,6 +121,10 @@ class RootController (
         } catch (_: IOException) {
             return this.badRequest
         }
+
+        // Refresh WebSocket sessions and cache
+        this.wsHandler.broadcast(key, "data", data)
+        this.sessionService.putData(key, data)
 
         this.profileService.pushData(key, data)
         return this.ok
@@ -112,8 +138,14 @@ class RootController (
         @RequestBody data: ByteArray,
     ) : ResponseEntity<String> {
 
+        // Users cannot submit data to other user's session
         if (!this.ownsSession(request, key, id)) {
             return this.badRequest
+        }
+
+        // Profiler should not be allowed to be alive more than 20 minutes
+        if (this.keys.getIfPresent(key) != true) {
+            return this.notFound
         }
 
         try {
@@ -123,6 +155,10 @@ class RootController (
         } catch (_: IOException) {
             return this.badRequest
         }
+
+        // Refresh WebSocket sessions and cache
+        this.wsHandler.broadcast(key, "timeline", data)
+        this.sessionService.putTimeline(key, data)
 
         this.profileService.pushTimeline(key, data)
         return this.ok
