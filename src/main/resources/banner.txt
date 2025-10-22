@@ -17,6 +17,6 @@ ${AnsiColor.BRIGHT_RED}                  \____/   /    /                        
 ${AnsiColor.BRIGHT_RED}                          /    /                            ${AnsiColor.YELLOW}    |  |  | (         | |
 ${AnsiColor.BRIGHT_RED}                         /    /                             ${AnsiColor.YELLOW} |\_)  )  | (____/\   | |
 ${AnsiColor.BRIGHT_RED}                        /    /                              ${AnsiColor.YELLOW} (____/   (_______/   )_(
-${AnsiColor.BRIGHT_RED}                       /    /                               ${AnsiColor.YELLOW} :: Jet ${spring-boot.formatted-version} ::
+${AnsiColor.BRIGHT_RED}                       /    /                               ${AnsiColor.YELLOW} :: Jet ${application.version} ::
 ${AnsiColor.BRIGHT_RED}                      /____/
 ${AnsiColor.BRIGHT_WHITE}

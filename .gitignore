@@ -47,3 +47,4 @@ tokens.yml
 src/generated/
 application.properties
 /jet.db
+/application.properties

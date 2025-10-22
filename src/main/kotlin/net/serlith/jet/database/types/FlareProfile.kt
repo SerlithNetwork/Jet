@@ -6,6 +6,8 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import org.springframework.data.annotation.CreatedDate
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "flare_profile")
@@ -23,5 +25,9 @@ class FlareProfile {
 
     @OneToMany(mappedBy = "profile", cascade = [CascadeType.ALL], orphanRemoval = true)
     var timelineSamples: MutableList<TimelineSample> = mutableListOf()
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false)
+    lateinit var createdAt: LocalDateTime
 
 }
