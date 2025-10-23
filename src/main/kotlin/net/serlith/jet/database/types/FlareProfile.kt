@@ -18,6 +18,24 @@ class FlareProfile {
     @Column(name = "profile_key", nullable = false)
     var key: String = ""
 
+    @Column(name = "server_brand", nullable = false)
+    var serverBrand: String = ""
+
+    @Column(name = "server_version", nullable = false)
+    var serverVersion: String = ""
+
+    @Column(name = "os_family", nullable = false)
+    var osFamily: String = ""
+
+    @Column(name = "os_version", nullable = false)
+    var osVersion: String = ""
+
+    @Column(name = "jvm_vendor", nullable = false)
+    var jvmVendor: String = ""
+
+    @Column(name = "jvm_version", nullable = false)
+    var jvmVersion: String = ""
+
     @Lob
     @Column(name = "raw", nullable = false)
     lateinit var raw: ByteArray

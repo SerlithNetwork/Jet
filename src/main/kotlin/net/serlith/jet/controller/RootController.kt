@@ -55,13 +55,25 @@ class RootController (
         val token = request.getHeader("Authorization").removePrefix("token ")
         val user = this.tokenService.getOwner(token) ?: "Unknown"
 
+        val profiler: ProfilerFileProto.CreateProfile
         try {
             GZIPInputStream(data.inputStream()).use { gzip ->
-                ProfilerFileProto.CreateProfile.parseFrom(gzip)
+                profiler = ProfilerFileProto.CreateProfile.parseFrom(gzip)
             }
         } catch (_: IOException) {
             this.logger.info("User '$user' send invalid data from instance at ${request.remoteAddr}:${request.remotePort}")
             return ResponseEntity.badRequest().build()
+        }
+
+        val splits = profiler.v3.versionsMap["Primary Version"]?.split("|", limit = 2) ?: emptyList()
+
+        var serverBrand = "<undefined>"
+        var serverVersion = "<undefined>"
+        if (splits.size == 1) {
+            serverVersion = splits[0]
+        } else if (splits.size == 2) {
+            serverBrand = splits[0]
+            serverVersion = splits[1]
         }
 
         var key = String.randomAlphanumeric(12)
@@ -72,6 +84,16 @@ class RootController (
         this.flareRepository.save(
             FlareProfile().apply {
                 this.key = key
+
+                this.serverBrand = serverBrand
+                this.serverVersion = serverVersion
+
+                this.osFamily = profiler.os.family
+                this.osVersion = profiler.os.version
+
+                this.jvmVendor = profiler.vmoptions.vendor
+                this.jvmVersion = profiler.vmoptions.version
+
                 this.raw = data
             }
         )
