@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDateTime
 import kotlin.jvm.optionals.getOrNull
 
 @RestController
@@ -41,6 +42,7 @@ class ApiController (
             raw = flare.raw,
             dataSamples = flare.dataSamples.map { s -> s.raw },
             timelineSamples = flare.timelineSamples.map { s -> s.raw },
+            createdAt = flare.createdAt,
         )
         this.logger.info("Requested profile from ${request.remoteAddr}:${request.remotePort}")
 
