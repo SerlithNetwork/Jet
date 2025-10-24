@@ -43,7 +43,7 @@ class ApiController (
             timelineSamples = flare.timelineSamples.map { s -> s.raw },
             createdAt = flare.createdAt,
         )
-        this.logger.info("Requested profile from ${request.remoteAddr}:${request.remotePort}")
+        this.logger.info("Requested profile '$key' from ${request.remoteAddr}:${request.remotePort}")
 
         return ResponseEntity.ok(response)
     }
@@ -53,7 +53,7 @@ class ApiController (
         request: HttpServletRequest,
         @PathVariable key: String,
     ): ResponseEntity<InputStreamResource> {
-        TODO("Render a thumbnail to show on discord") // ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(InputStreamResource(emptyPicture.inputStream))
+        TODO("Render a thumbnail to show on discord") // ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(InputStreamResource(thumbnail.inputStream))
     }
 
 }

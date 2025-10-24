@@ -42,7 +42,8 @@ out/
 ### Flare ###
 /logs/**
 /logs
-tokens.yml
+/tokens.yml
+/sensitive.yml
 **.log
 src/generated/
 application.properties

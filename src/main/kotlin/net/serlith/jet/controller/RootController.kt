@@ -3,11 +3,14 @@ package net.serlith.jet.controller
 import co.technove.flare.proto.ProfilerFileProto
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.google.protobuf.CodedInputStream
+import com.google.protobuf.InvalidProtocolBufferException
 import jakarta.servlet.http.HttpServletRequest
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.types.FlareProfile
 import net.serlith.jet.server.SampleWebSocketHandler
 import net.serlith.jet.service.ProfileService
+import net.serlith.jet.service.RedactionService
 import net.serlith.jet.service.TokenService
 import net.serlith.jet.types.CreateProfileResponse
 import net.serlith.jet.util.randomAlphanumeric
@@ -19,11 +22,13 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 @RestController
 class RootController (
@@ -31,6 +36,7 @@ class RootController (
     private val flareRepository: FlareProfileRepository,
     private val profileService: ProfileService,
     private val wsHandler: SampleWebSocketHandler,
+    private val redactionService: RedactionService,
 ) {
 
     private final val logger = LoggerFactory.getLogger(RootController::class.java)
@@ -76,6 +82,25 @@ class RootController (
             serverVersion = splits[1].trim()
         }
 
+        // Redact confidential entries in configs
+        val redactedConfigs = profiler.configsList.map { config ->
+            config.toBuilder()
+                .setContents(this.redactionService.sanitize(config.contents))
+                .build()
+        }
+        val redactedProfiler = profiler.toBuilder()
+            .clearConfigs()
+            .addAllConfigs(redactedConfigs)
+            .build()
+        val redactedRaw = ByteArrayOutputStream()
+        try {
+            GZIPOutputStream(redactedRaw).use { gzip ->
+                gzip.write(redactedProfiler.toByteArray())
+            }
+        } catch (_: IOException) {
+            this.logger.error("Failed to compress profiler back")
+        }
+
         var key = String.randomAlphanumeric(12)
         val keys = this.flareRepository.getAllKeys()
         while (key in keys) {
@@ -94,7 +119,7 @@ class RootController (
                 this.jvmVendor = profiler.vmoptions.vendor
                 this.jvmVersion = profiler.vmoptions.version
 
-                this.raw = data
+                this.raw = redactedRaw.toByteArray()
             }
         )
         this.keys.put(key, true)
@@ -140,8 +165,14 @@ class RootController (
 
         try {
             GZIPInputStream(data.inputStream()).use { gzip ->
-                ProfilerFileProto.AirplaneProfileFile.parseFrom(gzip)
+                ProfilerFileProto.AirplaneProfileFile.parseFrom(
+                    CodedInputStream.newInstance(gzip).apply {
+                        this.setRecursionLimit(5000)
+                    }
+                )
             }
+        } catch (e: InvalidProtocolBufferException) {
+            this.logger.error("Invalid protocol buffer submitted for $key: ${e.message}")
         } catch (_: IOException) {
             return this.badRequest
         }

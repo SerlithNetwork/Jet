@@ -13,8 +13,8 @@ import java.util.concurrent.TimeUnit
 @Service
 class TokenService {
 
-    private val config = File("tokens.yml")
-    private val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
+    private final val config = File("tokens.yml")
+    private final val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
 
     private var tokens: Set<Token> = emptySet()
 
