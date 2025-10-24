@@ -70,10 +70,10 @@ class RootController (
         var serverBrand = "<undefined>"
         var serverVersion = "<undefined>"
         if (splits.size == 1) {
-            serverVersion = splits[0]
+            serverVersion = splits[0].trim()
         } else if (splits.size == 2) {
-            serverBrand = splits[0]
-            serverVersion = splits[1]
+            serverBrand = splits[0].trim()
+            serverVersion = splits[1].trim()
         }
 
         var key = String.randomAlphanumeric(12)

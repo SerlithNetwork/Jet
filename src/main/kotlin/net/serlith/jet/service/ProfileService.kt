@@ -25,7 +25,7 @@ class ProfileService (
         timelineMap: Map<String, List<ByteArray>>,
     ) {
         val flareIds = dataMap.keys + timelineMap.keys
-        val flares = flareRepository.findAllById(flareIds).associateBy { it.key }
+        val flares = this.flareRepository.findAllById(flareIds).associateBy { it.key }
 
         for ((key, raws) in dataMap) {
             val flare = flares[key] ?: continue
