@@ -28,7 +28,7 @@ class WebSocketHandshakeInterceptor (
 
         // Reject WS connection if the profiler is not live
         if (key == null || !this.handler.isProfilerLive(key)) {
-            response.setStatusCode(HttpStatus.FORBIDDEN)
+            response.setStatusCode(HttpStatus.NOT_ACCEPTABLE)
             return false
         }
 
