@@ -33,7 +33,7 @@ class SampleWebSocketHandler : TextWebSocketHandler() {
         val key: String = session.attributes["key"] as String
         val sessionData = this.cache.get(key) { SessionData() }
 
-        sessionData.connections.add(session)
+        sessionData.connections.offer(session)
         sessionData.data.forEach { d -> session.sendMessage(this.toTextMessage("data", d)) }
         sessionData.timeline.forEach { d -> session.sendMessage(this.toTextMessage("timeline", d)) }
     }
@@ -56,13 +56,13 @@ class SampleWebSocketHandler : TextWebSocketHandler() {
     final fun broadcastData(key: String, data: ByteArray) {
         this.broadcast(key, "data", data)
         val sessionData = this.cache.get(key) { SessionData() }
-        sessionData.data.add(data)
+        sessionData.data.offer(data)
     }
 
     final fun broadcastTimeline(key: String, timeline: ByteArray) {
         this.broadcast(key, "timeline", timeline)
         val sessionData = this.cache.get(key) { SessionData() }
-        sessionData.timeline.add(timeline)
+        sessionData.timeline.offer(timeline)
     }
 
     private final fun broadcast(key: String, type: String, data: ByteArray) {
@@ -70,7 +70,7 @@ class SampleWebSocketHandler : TextWebSocketHandler() {
         this.cache.getIfPresent(key)?.let { sessionData ->
             sessionData.connections.forEach { session ->
                 if (session.isOpen) {
-                    session.sendMessage(jsonString)
+                    session.sendMessage(jsonString) // TODO: Check for IOException
                 }
             }
         }
