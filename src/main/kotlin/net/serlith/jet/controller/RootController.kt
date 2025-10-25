@@ -1,16 +1,15 @@
 package net.serlith.jet.controller
 
 import co.technove.flare.proto.ProfilerFileProto
-import com.github.benmanes.caffeine.cache.Cache
-import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.protobuf.CodedInputStream
 import com.google.protobuf.InvalidProtocolBufferException
 import jakarta.servlet.http.HttpServletRequest
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.types.FlareProfile
-import net.serlith.jet.server.SampleWebSocketHandler
+import net.serlith.jet.server.SocketIOComponent
 import net.serlith.jet.service.ProfileService
 import net.serlith.jet.service.RedactionService
+import net.serlith.jet.service.SessionService
 import net.serlith.jet.service.TokenService
 import net.serlith.jet.types.CreateProfileResponse
 import net.serlith.jet.util.randomAlphanumeric
@@ -35,8 +34,9 @@ class RootController (
     private val tokenService: TokenService,
     private val flareRepository: FlareProfileRepository,
     private val profileService: ProfileService,
-    private val wsHandler: SampleWebSocketHandler,
     private val redactionService: RedactionService,
+    private val socketComponent: SocketIOComponent,
+    private val sessionService: SessionService,
 ) {
 
     private final val logger = LoggerFactory.getLogger(RootController::class.java)
@@ -48,9 +48,6 @@ class RootController (
     private final val dataQueue = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
     private final val timelineQueue = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
 
-    private final val keys: Cache<String, Boolean> = Caffeine.newBuilder()
-        .expireAfterAccess(20, TimeUnit.MINUTES)
-        .build()
 
     @PostMapping("/create")
     fun postCreate(
@@ -106,6 +103,8 @@ class RootController (
         while (key in keys) {
             key = String.randomAlphanumeric(13)
         }
+
+        val redactedBytes = redactedRaw.toByteArray()
         this.flareRepository.save(
             FlareProfile().apply {
                 this.key = key
@@ -119,10 +118,10 @@ class RootController (
                 this.jvmVendor = profiler.vmoptions.vendor
                 this.jvmVersion = profiler.vmoptions.version
 
-                this.raw = redactedRaw.toByteArray()
+                this.raw = redactedBytes
             }
         )
-        this.keys.put(key, true)
+        this.socketComponent.broadcastProfiler(key, redactedBytes)
         this.logger.info("User '$user' created a new profile '$key' for instance at ${request.remoteAddr}:${request.remotePort}")
 
         val hash = this.sha256.digest("$token:$key".toByteArray())
@@ -159,7 +158,7 @@ class RootController (
         }
 
         // Profiler should not be allowed to be alive more than 20 minutes
-        if (this.keys.getIfPresent(key) != true) {
+        if (!this.sessionService.isProfilerLive(key)) {
             return this.notFound
         }
 
@@ -178,7 +177,7 @@ class RootController (
         }
 
         // Refresh WebSocket sessions
-        this.wsHandler.broadcastData(key, data)
+        this.socketComponent.broadcastData(key, data)
 
         // Store data
         this.dataQueue.add(Pair(key, data))
@@ -199,7 +198,7 @@ class RootController (
         }
 
         // Profiler should not be allowed to be alive more than 20 minutes
-        if (this.keys.getIfPresent(key) != true) {
+        if (!this.sessionService.isProfilerLive(key)) {
             return this.notFound
         }
 
@@ -212,7 +211,7 @@ class RootController (
         }
 
         // Refresh WebSocket sessions
-        this.wsHandler.broadcastTimeline(key, data)
+        this.socketComponent.broadcastTimeline(key, data)
 
         // Store timeline
         this.timelineQueue.add(Pair(key, data))

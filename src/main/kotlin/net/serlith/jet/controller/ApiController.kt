@@ -2,7 +2,6 @@ package net.serlith.jet.controller
 
 import jakarta.servlet.http.HttpServletRequest
 import net.serlith.jet.database.repository.FlareProfileRepository
-import net.serlith.jet.server.SampleWebSocketHandler
 import net.serlith.jet.types.FlareProfileResponse
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.InputStreamResource
@@ -17,18 +16,9 @@ import kotlin.jvm.optionals.getOrNull
 @RequestMapping("/api")
 class ApiController (
     private val flareRepository: FlareProfileRepository,
-    private val wsHandler: SampleWebSocketHandler,
 ) {
 
     private final val logger = LoggerFactory.getLogger(ApiController::class.java)
-
-    @GetMapping("/profiler/live/{key}")
-    fun isProfilerLive(
-        @PathVariable key: String,
-    ): ResponseEntity<Boolean> {
-        this.logger.info("Requested if profiler for $key is live")
-        return ResponseEntity.ok(this.wsHandler.isProfilerLive(key))
-    }
 
     @GetMapping("/profiler/{key}")
     fun requestProfiler(
