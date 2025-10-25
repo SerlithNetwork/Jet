@@ -8,14 +8,12 @@ import net.serlith.jet.util.SessionData
 import net.serlith.jet.util.SingleDataHolder
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.context.annotation.Lazy
 import java.util.concurrent.TimeUnit
 
 @Service
 class SessionService {
 
-    @field:Lazy
-    private lateinit var server: SocketIOServer
+    private final lateinit var server: SocketIOServer
 
     private final val logger = LoggerFactory.getLogger(this::class.java)
 
@@ -33,6 +31,12 @@ class SessionService {
             }
         }.build()
 
+
+    final fun initializeServer(server: SocketIOServer) {
+        if (!this::server.isInitialized) {
+            this.server = server
+        }
+    }
 
     final fun isProfilerLive(key: String): Boolean {
         return this.cache.getIfPresent(key) != null
