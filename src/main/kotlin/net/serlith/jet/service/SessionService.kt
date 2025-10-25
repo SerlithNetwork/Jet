@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.RemovalCause
 import net.serlith.jet.util.SessionData
+import net.serlith.jet.util.SingleDataHolder
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.context.annotation.Lazy
@@ -40,15 +41,15 @@ class SessionService {
         return this.cache.getIfPresent(key)
     }
 
-    final fun saveProfiler(key: String, data: ByteArray) {
+    final fun saveProfiler(key: String, data: SingleDataHolder) {
         this.cache.put(key, SessionData(data))
     }
 
-    final fun saveData(key: String, data: ByteArray) {
+    final fun saveData(key: String, data: SingleDataHolder) {
         this.cache.getIfPresent(key)?.data?.offer(data)
     }
 
-    final fun saveTimeline(key: String, data: ByteArray) {
+    final fun saveTimeline(key: String, data: SingleDataHolder) {
         this.cache.getIfPresent(key)?.timeline?.offer(data)
     }
 
