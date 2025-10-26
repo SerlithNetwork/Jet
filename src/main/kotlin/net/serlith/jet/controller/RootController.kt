@@ -177,6 +177,7 @@ class RootController (
             }
         } catch (e: InvalidProtocolBufferException) {
             this.logger.error("Invalid protocol buffer submitted for $key: ${e.message}")
+            return this.badRequest
         } catch (_: IOException) {
             return this.badRequest
         }
