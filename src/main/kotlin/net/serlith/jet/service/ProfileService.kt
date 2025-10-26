@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 class ProfileService (
@@ -18,30 +19,30 @@ class ProfileService (
     @Value($$"${jet.cleanup.days:30}")
     private var cleanupDays: Long = 0
 
-    @Synchronized
     @Transactional
-    fun pushToDatabase(
-        dataMap: Map<String, List<ByteArray>>,
-        timelineMap: Map<String, List<ByteArray>>,
-    ) {
-        val flareIds = dataMap.keys + timelineMap.keys
-        val flares = this.flareRepository.findAllById(flareIds).associateBy { it.key }
+    fun pushData(key: String, raw: ByteArray): Boolean {
+        val flare = this.flareRepository.findById(key).getOrNull() ?: return false
+        flare.dataSamples.add(
+            DataSample().apply {
+                this.profile = flare
+                this.raw = raw
+            }
+        )
+        this.flareRepository.save(flare)
+        return true
+    }
 
-        for ((key, raws) in dataMap) {
-            val flare = flares[key] ?: continue
-            flare.dataSamples.addAll(
-                raws.map { DataSample().apply { this.profile = flare; this.raw = it } }
-            )
-        }
-
-        for ((key, raws) in timelineMap) {
-            val flare = flares[key] ?: continue
-            flare.timelineSamples.addAll(
-                raws.map { TimelineSample().apply { this.profile = flare; this.raw = it } }
-            )
-        }
-
-        this.flareRepository.saveAll(flares.values)
+    @Transactional
+    fun pushTimeline(key: String, raw: ByteArray): Boolean {
+        val flare = this.flareRepository.findById(key).getOrNull() ?: return false
+        flare.timelineSamples.add(
+            TimelineSample().apply {
+                this.profile = flare
+                this.raw = raw
+            }
+        )
+        this.flareRepository.save(flare)
+        return true
     }
 
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)

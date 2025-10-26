@@ -15,7 +15,6 @@ import net.serlith.jet.types.CreateProfileResponse
 import net.serlith.jet.util.randomAlphanumeric
 import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -24,8 +23,6 @@ import org.springframework.web.bind.annotation.RestController
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.security.MessageDigest
-import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
 
@@ -44,9 +41,6 @@ class RootController (
     private final val notFound = ResponseEntity.notFound().build<String>()
     private final val badRequest = ResponseEntity.badRequest().build<String>()
     private final val sha256 = MessageDigest.getInstance("SHA-256")
-
-    private final val dataQueue = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
-    private final val timelineQueue = ConcurrentLinkedQueue<Pair<String, ByteArray>>()
 
 
     @PostMapping("/create")
@@ -180,7 +174,7 @@ class RootController (
         this.socketComponent.broadcastData(key, data)
 
         // Store data
-        this.dataQueue.add(Pair(key, data))
+        this.profileService.pushData(key, data)
         return this.ok
     }
 
@@ -214,7 +208,7 @@ class RootController (
         this.socketComponent.broadcastTimeline(key, data)
 
         // Store timeline
-        this.timelineQueue.add(Pair(key, data))
+        this.profileService.pushTimeline(key, data)
         return this.ok
     }
 
@@ -222,30 +216,6 @@ class RootController (
         val token = request.getHeader("Authorization").removePrefix("token ")
         val hash256 = this.sha256.digest("$token:$key".toByteArray())
         return hash256.toHexString() == hash
-    }
-
-    // Probably drop this shit and move it back into their own transactional functions
-    // I'm not sure yet, H2 doesn't seem to need this compared to SQLite
-    @Scheduled(fixedRate = 10, timeUnit = TimeUnit.SECONDS)
-    fun flushToDatabase() {
-        val dataList = mutableListOf<Pair<String, ByteArray>>()
-        val timelineList = mutableListOf<Pair<String, ByteArray>>()
-
-        while (true) {
-            val data = dataQueue.poll() ?: break
-            dataList.add(data)
-        }
-        while (true) {
-            val timeline = timelineQueue.poll() ?: break
-            timelineList.add(timeline)
-        }
-
-        if (dataList.isNotEmpty() || timelineList.isNotEmpty()) {
-            this.profileService.pushToDatabase(
-                dataList.groupBy({ it.first }, { it.second }),
-                timelineList.groupBy({ it.first }, { it.second }),
-            )
-        }
     }
 
 }
