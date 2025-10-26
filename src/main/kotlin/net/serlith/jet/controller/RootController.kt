@@ -10,6 +10,7 @@ import net.serlith.jet.server.SocketIOComponent
 import net.serlith.jet.service.ProfileService
 import net.serlith.jet.service.RedactionService
 import net.serlith.jet.service.SessionService
+import net.serlith.jet.service.ThumbnailService
 import net.serlith.jet.service.TokenService
 import net.serlith.jet.types.CreateProfileResponse
 import net.serlith.jet.util.randomAlphanumeric
@@ -34,6 +35,7 @@ class RootController (
     private val redactionService: RedactionService,
     private val socketComponent: SocketIOComponent,
     private val sessionService: SessionService,
+    private val thumbnailService: ThumbnailService,
 ) {
 
     private final val logger = LoggerFactory.getLogger(RootController::class.java)
@@ -116,8 +118,17 @@ class RootController (
             }
         )
         this.socketComponent.broadcastProfiler(key, redactedBytes)
-        this.logger.info("User '$user' created a new profile '$key' for instance at ${request.remoteAddr}:${request.remotePort}")
+        this.thumbnailService.storeThumbnail(
+            key = key,
+            platform = serverBrand,
+            version = serverVersion,
+            osFamily = profiler.os.family,
+            osVersion = profiler.os.version,
+            jvmName = profiler.vmoptions.vendor,
+            jvmVersion = profiler.vmoptions.version
+        )
 
+        this.logger.info("User '$user' created a new profile '$key' for instance at ${request.remoteAddr}:${request.remotePort}")
         val hash = this.sha256.digest("$token:$key".toByteArray())
         return ResponseEntity.ok(
             CreateProfileResponse(

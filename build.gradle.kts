@@ -41,7 +41,6 @@ dependencies {
     implementation("com.google.protobuf:protobuf-javalite:3.17.3")
     implementation("com.google.protobuf:protobuf-java-util:3.14.0")
     implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
-    implementation("org.xhtmlrenderer:flying-saucer-core:10.0.3") // Close your eyes before opening: https://flyingsaucerproject.github.io/flyingsaucer/r8/guide/users-guide-R8.html
     implementation("io.github.neatguycoding:netty-socketio-core:3.0.0")
     implementation("io.github.neatguycoding:netty-socketio-spring:3.0.0")
     implementation("io.github.neatguycoding:netty-socketio-spring-boot-starter:3.0.0")
