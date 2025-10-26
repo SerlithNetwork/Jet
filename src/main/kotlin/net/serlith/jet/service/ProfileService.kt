@@ -36,7 +36,7 @@ class ProfileService (
 
         for ((key, raws) in timelineMap) {
             val flare = flares[key] ?: continue
-            flares[key]?.timelineSamples?.addAll(
+            flare.timelineSamples.addAll(
                 raws.map { TimelineSample().apply { this.profile = flare; this.raw = it } }
             )
         }
