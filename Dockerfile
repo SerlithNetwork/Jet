@@ -9,7 +9,7 @@ COPY build.gradle.kts ./
 COPY gradlew ./
 COPY gradlew.bat ./
 COPY settings.gradle.kts ./
-RUN gradlew build
+RUN ./gradlew build
 
 FROM eclipse-temurin:25-alpine
 
