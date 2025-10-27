@@ -1,6 +1,6 @@
 
 # Referenced from gh.com/lucko/bytebin
-FROM gradle:jdk25-corretto AS build-project
+FROM gradle:jdk21-corretto AS build-project
 
 WORKDIR /jet
 COPY gradle/ ./gradle/
@@ -9,7 +9,7 @@ COPY build.gradle.kts ./
 COPY gradlew ./
 COPY gradlew.bat ./
 COPY settings.gradle.kts ./
-RUN chmod +x gradlew && ./gradlew build
+RUN chmod +x gradlew && ./gradlew build --no-daemon --stacktrace
 
 FROM eclipse-temurin:25-alpine
 
