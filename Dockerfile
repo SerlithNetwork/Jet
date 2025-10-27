@@ -17,7 +17,7 @@ RUN addgroup -S jet && adduser -S -G jet jet
 USER jet
 
 WORKDIR /opt/jet
-COPY --from=build-project /Jet/build/libs/Jet-0.0.1-SNAPSHOT.jar ./jet.jar
+COPY --from=build-project /jet/build/libs/Jet-0.0.1-SNAPSHOT.jar ./jet.jar
 
 RUN mkdir pictures config
 VOLUME ["/opt/jet/pictures", "/opt/jet/config"]
