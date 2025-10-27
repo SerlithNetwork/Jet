@@ -90,8 +90,9 @@ class RootController (
             GZIPOutputStream(redactedRaw).use { gzip ->
                 gzip.write(redactedProfiler.toByteArray())
             }
-        } catch (_: IOException) {
-            this.logger.error("Failed to compress profiler back")
+        } catch (e: IOException) {
+            this.logger.error("Failed to compress profiler back: ${e.message}")
+            return ResponseEntity.badRequest().build()
         }
 
         var key = String.randomAlphanumeric(12)
@@ -159,11 +160,13 @@ class RootController (
 
         // Users cannot submit data to other user's session
         if (!this.ownsSession(request, hash, key)) {
+            this.logger.info("User of key '$key' tried to access someone else's profiler session (data)")
             return this.badRequest
         }
 
         // Profiler should not be allowed to be alive more than 20 minutes
         if (!this.sessionService.isProfilerLive(key)) {
+            this.logger.info("User of key '$key' tried to writing into their already expired profiler (data)")
             return this.notFound
         }
 
@@ -176,9 +179,10 @@ class RootController (
                 )
             }
         } catch (e: InvalidProtocolBufferException) {
-            this.logger.error("Invalid protocol buffer submitted for $key: ${e.message}")
+            this.logger.error("Invalid protocol buffer (data) submitted for $key: ${e.message}")
             return this.badRequest
-        } catch (_: IOException) {
+        } catch (e: IOException) {
+            this.logger.info("Invalid buffer (data) submitted for $key: ${e.message}")
             return this.badRequest
         }
 
@@ -200,11 +204,13 @@ class RootController (
 
         // Users cannot submit data to other user's session
         if (!this.ownsSession(request, hash, key)) {
+            this.logger.info("User of key '$key' tried to access someone else's profiler session (timeline)")
             return this.badRequest
         }
 
         // Profiler should not be allowed to be alive more than 20 minutes
         if (!this.sessionService.isProfilerLive(key)) {
+            this.logger.info("User of key '$key' tried to writing into their already expired profiler (timeline)")
             return this.notFound
         }
 
@@ -212,7 +218,11 @@ class RootController (
             GZIPInputStream(data.inputStream()).use { gzip ->
                 ProfilerFileProto.TimelineFile.parseFrom(gzip)
             }
-        } catch (_: IOException) {
+        } catch (e: InvalidProtocolBufferException) {
+            this.logger.error("Invalid protocol buffer (timeline) submitted for $key: ${e.message}")
+            return this.badRequest
+        } catch (e: IOException) {
+            this.logger.info("Invalid buffer (timeline) submitted for $key: ${e.message}")
             return this.badRequest
         }
 
