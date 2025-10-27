@@ -1,6 +1,6 @@
 
 services:
-  bytebin:
+  jet:
     image: ghcr.io/serlithnetwork/jet
     ports:
       - "9420:9420"
