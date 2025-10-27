@@ -13,7 +13,8 @@ import java.util.concurrent.TimeUnit
 @Service
 class TokenService {
 
-    private final val config = File("tokens.yml")
+    private final val config = File("config")
+    private final val tokensFile = File("tokens.yml")
     private final val objectMapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
 
     private final var tokens: Set<Token> = emptySet()
@@ -23,17 +24,20 @@ class TokenService {
 
     @PostConstruct
     fun init() {
-        if (!this.config.exists()) this.createDefaultConfig()
+        this.config.mkdirs()
+        if (!this.tokensFile.exists()) {
+            this.createDefaultConfig()
+        }
         this.loadConfig()
     }
 
     private final fun createDefaultConfig() {
         val default = Tokens()
-        this.objectMapper.writeValue(this.config, default)
+        this.objectMapper.writeValue(this.tokensFile, default)
     }
 
     private final fun loadConfig() {
-        val input: Tokens = this.objectMapper.readValue(this.config)
+        val input: Tokens = this.objectMapper.readValue(this.tokensFile)
         this.tokens = input.tokens.toSet()
     }
 

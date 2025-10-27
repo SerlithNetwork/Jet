@@ -23,6 +23,12 @@ class ApiController (
 ) {
 
     private final val logger = LoggerFactory.getLogger(ApiController::class.java)
+    private final val health = ResponseEntity.ok("{\"status\":\"ok\"}")
+
+    @GetMapping("/health")
+    fun requestHealth(): ResponseEntity<String> {
+        return this.health
+    }
 
     @GetMapping("/profiler/{key}")
     fun requestProfiler(

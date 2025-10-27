@@ -51,3 +51,4 @@ application.properties
 /jetdb.trace.db
 /application.properties
 /pictures
+/config

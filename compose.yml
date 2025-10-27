@@ -1,0 +1,14 @@
+
+services:
+  bytebin:
+    image: ghcr.io/serlithnetwork/jet
+    ports:
+      - "9420:9420"
+      - "9430:9430"
+    volumes:
+      - pictures:/opt/jet/pictures
+      - config:/opt/jet/config
+
+volumes:
+  pictures: {}
+  config: {}

@@ -11,7 +11,8 @@ import java.io.File
 @Service
 class RedactionService {
 
-    private final val file = File("sensitive.yml")
+    private final val config = File("config")
+    private final val file = File(this.config, "sensitive.yml")
     private final val mapper = ObjectMapper(YAMLFactory()).registerKotlinModule()
 
     private final lateinit var regex: List<Regex>
@@ -35,6 +36,7 @@ class RedactionService {
 
     @PostConstruct
     fun init() {
+        this.config.mkdirs()
         if (!this.file.exists()) {
             this.createDefaultFile()
         }
