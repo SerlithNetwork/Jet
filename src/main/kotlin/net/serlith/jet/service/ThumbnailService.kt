@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service
 import java.awt.Color
 import java.awt.Font
 import java.awt.RenderingHints
-import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.time.Instant
@@ -24,16 +23,14 @@ class ThumbnailService {
     private var cleanupDays: Long = 0
 
     private final val directory = File("pictures")
-    private final lateinit var template: BufferedImage
+    private final lateinit var templateResource: ClassPathResource
     private final lateinit var fontMid: Font
     private final lateinit var fontSmall: Font
 
     @PostConstruct
     fun init() {
         this.directory.mkdirs()
-        ClassPathResource("thumbnail.png").inputStream.use { inputStream ->
-            this.template = ImageIO.read(inputStream)
-        }
+        this.templateResource = ClassPathResource("thumbnail.png")
         ClassPathResource("JetBrainsMono-Regular.ttf").inputStream.use { inputStream ->
             val font = Font.createFont(Font.TRUETYPE_FONT, inputStream)
             this.fontMid = font.deriveFont(32f)
@@ -43,7 +40,8 @@ class ThumbnailService {
 
     @Suppress("DuplicatedCode")
     final fun storeThumbnail(key: String, platform: String, version: String, osFamily: String, osVersion: String, jvmName: String, jvmVersion: String) {
-        val g2d = this.template.createGraphics()
+        val template = this.templateResource.inputStream.use { inputStream -> ImageIO.read(inputStream) }
+        val g2d = template.createGraphics()
 
         val platformString = "$platform "
         val osFamilyString = "$osFamily "
@@ -104,7 +102,7 @@ class ThumbnailService {
 
         g2d.dispose()
 
-        ImageIO.write(this.template, "PNG", File(directory, "$key.png"))
+        ImageIO.write(template, "PNG", File(directory, "$key.png"))
     }
 
     // Maybe some cache will be a good idea in the future, but for now this is ok
