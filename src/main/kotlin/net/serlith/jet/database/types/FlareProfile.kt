@@ -37,7 +37,7 @@ class FlareProfile {
     var jvmVersion: String = ""
 
     @Lob
-    @Column(name = "raw", nullable = false)
+    @Column(name = "raw", columnDefinition = "LONGBLOB", nullable = false)
     lateinit var raw: ByteArray
 
     @OneToMany(mappedBy = "profile", cascade = [CascadeType.ALL], orphanRemoval = true)

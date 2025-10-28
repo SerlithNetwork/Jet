@@ -23,7 +23,7 @@ class TimelineSample {
     lateinit var profile: FlareProfile
 
     @Lob
-    @Column(name = "raw", nullable = false)
+    @Column(name = "raw", columnDefinition = "LONGBLOB", nullable = false)
     lateinit var raw: ByteArray
 
 }
