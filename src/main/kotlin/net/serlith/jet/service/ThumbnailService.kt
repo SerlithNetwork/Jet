@@ -78,7 +78,7 @@ class ThumbnailService {
         x += g2d.fontMetrics.stringWidth("version ")
 
         g2d.color = Color.WHITE
-        g2d.drawString(osVersion, x, 400)
+        g2d.drawString(osVersion.split("build").firstOrNull() ?: "<unknown>", x, 400)
 
 
 
