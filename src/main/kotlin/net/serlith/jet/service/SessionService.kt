@@ -18,7 +18,7 @@ class SessionService {
     private final val logger = LoggerFactory.getLogger(this::class.java)
 
     private final val cache: Cache<String, SessionData> = Caffeine.newBuilder()
-        .expireAfterAccess(30, TimeUnit.SECONDS)
+        .expireAfterAccess(2, TimeUnit.MINUTES)
         .expireAfterWrite(20, TimeUnit.MINUTES)
         .removalListener<String, SessionData> { key, _, cause ->
             if (cause == RemovalCause.EXPIRED && key != null) {
