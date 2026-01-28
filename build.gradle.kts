@@ -40,7 +40,6 @@ dependencies {
     implementation("com.zaxxer:HikariCP:7.0.2")
     implementation("com.google.protobuf:protobuf-javalite:3.17.3")
     implementation("com.google.protobuf:protobuf-java-util:3.14.0")
-    implementation("com.github.ben-manes.caffeine:caffeine:3.2.2")
     implementation("io.github.neatguycoding:netty-socketio-core:3.0.0")
     implementation("io.github.neatguycoding:netty-socketio-spring:3.0.0")
     implementation("io.github.neatguycoding:netty-socketio-spring-boot-starter:3.0.0")

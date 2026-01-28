@@ -38,10 +38,10 @@ constructor (
         this.logger.info("Connected user from ${client.handshakeData.address} to $key")
         this.sessionService.getSession(key)?.let { session ->
             client.sendEvent("airplane_profiler", session.profiler)
-            session.data.forEach { data ->
+            session.forEachData { data ->
                 client.sendEvent("airplane_data", data)
             }
-            session.timeline.forEach { timeline ->
+            session.forEachTimeline { timeline ->
                 client.sendEvent("airplane_timeline", timeline)
             }
         }
