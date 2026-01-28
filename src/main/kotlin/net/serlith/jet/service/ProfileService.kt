@@ -45,6 +45,7 @@ class ProfileService (
         return true
     }
 
+    @Transactional
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
     fun purgeOldProfiles() {
         this.flareRepository.deleteByCreatedAtBefore(LocalDateTime.now().minusDays(this.cleanupDays))
