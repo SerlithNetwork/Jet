@@ -14,4 +14,6 @@ interface FlareProfileRepository : CrudRepository<FlareProfile, String> {
 
     fun deleteByCreatedAtBefore(createdBefore: LocalDateTime)
 
+    fun existsFlareProfileByKey(key: String): Boolean
+
 }

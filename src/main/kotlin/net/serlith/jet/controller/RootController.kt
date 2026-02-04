@@ -6,7 +6,6 @@ import com.google.protobuf.InvalidProtocolBufferException
 import jakarta.servlet.http.HttpServletRequest
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.types.FlareProfile
-import net.serlith.jet.server.SocketIOComponent
 import net.serlith.jet.service.ProfileService
 import net.serlith.jet.service.RedactionService
 import net.serlith.jet.service.SessionService
@@ -33,7 +32,6 @@ class RootController (
     private val flareRepository: FlareProfileRepository,
     private val profileService: ProfileService,
     private val redactionService: RedactionService,
-    private val socketComponent: SocketIOComponent,
     private val sessionService: SessionService,
     private val thumbnailService: ThumbnailService,
 ) {
@@ -118,7 +116,8 @@ class RootController (
                 this.raw = redactedBytes
             }
         )
-        this.socketComponent.broadcastProfiler(key, redactedBytes)
+
+        this.sessionService.submitProfiler(key)
         this.thumbnailService.storeThumbnail(
             key = key,
             platform = serverBrand,
@@ -186,8 +185,8 @@ class RootController (
             return this.badRequest
         }
 
-        // Refresh WebSocket sessions
-        this.socketComponent.broadcastData(key, data)
+        // Refresh sessions
+        this.sessionService.submitDataToCache(key, data)
 
         // Store data
         this.profileService.pushData(key, data)
@@ -226,8 +225,8 @@ class RootController (
             return this.badRequest
         }
 
-        // Refresh WebSocket sessions
-        this.socketComponent.broadcastTimeline(key, data)
+        // Refresh sessions
+        this.sessionService.submitTimelineToCache(key, data)
 
         // Store timeline
         this.profileService.pushTimeline(key, data)
