@@ -12,6 +12,8 @@ interface FlareProfileRepository : CrudRepository<FlareProfile, String> {
     @Query("select profile.key from FlareProfile profile")
     fun getAllKeys(): List<String>
 
-    fun deleteByCreatedAtBefore(createdBefore: LocalDateTime)
+    fun findAllByCreatedAtBefore(createdBefore: LocalDateTime): List<FlareProfile>
+
+    fun existsFlareProfileByKey(key: String): Boolean
 
 }

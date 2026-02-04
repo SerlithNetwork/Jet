@@ -22,6 +22,8 @@ repositories {
 }
 
 dependencies {
+    // implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
+    // implementation("org.springframework.boot:spring-boot-starter-r2dbc")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-rest")
     implementation("org.springframework.boot:spring-boot-starter-jdbc")
@@ -40,9 +42,6 @@ dependencies {
     implementation("com.zaxxer:HikariCP:7.0.2")
     implementation("com.google.protobuf:protobuf-javalite:3.17.3")
     implementation("com.google.protobuf:protobuf-java-util:3.14.0")
-    implementation("io.github.neatguycoding:netty-socketio-core:3.0.0")
-    implementation("io.github.neatguycoding:netty-socketio-spring:3.0.0")
-    implementation("io.github.neatguycoding:netty-socketio-spring-boot-starter:3.0.0")
 
     runtimeOnly("com.zaxxer:HikariCP:6.2.1")
     runtimeOnly("com.mysql:mysql-connector-j:9.2.0")
