@@ -96,8 +96,8 @@ class ApiController (
             }.map { sample ->
                 ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
             }.concatWith(Flux.just(
-                ServerSentEvent.builder($$"jet$terminated")
-                    .event($$"jet$terminated")
+                ServerSentEvent.builder($$"flare$terminated")
+                    .event($$"flare$terminated")
                     .build()
             ))
         }
@@ -139,8 +139,8 @@ class ApiController (
             }.map { sample ->
                 ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
             }.concatWith(Flux.just(
-                ServerSentEvent.builder($$"jet$terminated")
-                    .event($$"jet$terminated")
+                ServerSentEvent.builder($$"flare$terminated")
+                    .event($$"flare$terminated")
                     .build()
             ))
         }
