@@ -50,7 +50,12 @@ class ProfileService (
     @Transactional
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
     fun purgeOldProfiles() {
-        this.flareRepository.deleteByCreatedAtBefore(LocalDateTime.now().minusDays(this.cleanupDays))
+        val cleanup = LocalDateTime.now().minusDays(this.cleanupDays)
+        this.flareRepository.findAllByCreatedAtBefore(cleanup).forEach { profile ->
+            this.dataRepository.deleteAllByProfileKey(profile.key)
+            this.timelineRepository.deleteAllByProfileKey(profile.key)
+            this.flareRepository.deleteById(profile.key)
+        }
     }
 
 }

@@ -86,6 +86,7 @@ class ApiController (
                     )
             }
 
+            @Suppress("DuplicatedCode")
             return@flatMapMany Mono.fromCallable {
                 this.dataRepository.findByProfileKey(key)
             }.subscribeOn(
@@ -94,7 +95,11 @@ class ApiController (
                 Flux.fromIterable(list)
             }.map { sample ->
                 ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
-            }
+            }.concatWith(Flux.just(
+                ServerSentEvent.builder($$"jet$terminated")
+                    .event($$"jet$terminated")
+                    .build()
+            ))
         }
     }
 
@@ -124,6 +129,7 @@ class ApiController (
                     )
             }
 
+            @Suppress("DuplicatedCode")
             return@flatMapMany Mono.fromCallable {
                 this.timelineRepository.findByProfileKey(key)
             }.subscribeOn(
@@ -132,7 +138,11 @@ class ApiController (
                 Flux.fromIterable(list)
             }.map { sample ->
                 ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
-            }
+            }.concatWith(Flux.just(
+                ServerSentEvent.builder($$"jet$terminated")
+                    .event($$"jet$terminated")
+                    .build()
+            ))
         }
     }
 

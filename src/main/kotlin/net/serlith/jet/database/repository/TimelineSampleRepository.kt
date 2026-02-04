@@ -5,4 +5,5 @@ import org.springframework.data.repository.CrudRepository
 
 interface TimelineSampleRepository : CrudRepository<TimelineSample, Long> {
     fun findByProfileKey(key: String): List<TimelineSample>
+    fun deleteAllByProfileKey(key: String)
 }

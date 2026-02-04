@@ -58,11 +58,15 @@ class SessionService {
     }
 
     final fun submitDataToCache(key: String, data: ByteArray) {
-        this.cache[key]?.offerData(this.encoder.encodeToString(data))
+        val encoded = this.encoder.encodeToString(data)
+        this.cache[key]?.offerData(encoded)
+        this.dataStreams[key]?.tryEmitNext(encoded)
     }
 
     final fun submitTimelineToCache(key: String, data: ByteArray) {
-        this.cache[key]?.offerTimeline(this.encoder.encodeToString(data))
+        val encoded = this.encoder.encodeToString(data)
+        this.cache[key]?.offerTimeline(encoded)
+        this.timelineStreams[key]?.tryEmitNext(encoded)
     }
 
     final fun isProfilerLive(key: String): Boolean {
