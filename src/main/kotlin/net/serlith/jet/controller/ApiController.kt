@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
+import java.time.Duration
 import java.util.Base64
 import kotlin.jvm.optionals.getOrNull
 import kotlin.time.measureTimedValue
@@ -38,6 +39,7 @@ class ApiController (
     private final val logger = LoggerFactory.getLogger(ApiController::class.java)
     private final val health = ResponseEntity.ok("{\"status\":\"ok\"}")
     private final val encoder = Base64.getEncoder()
+    private final val delay = Duration.ofMillis(100)
 
     @GetMapping("/health")
     fun requestHealth(): ResponseEntity<String> {
@@ -83,7 +85,7 @@ class ApiController (
                             .map {
                                 ServerSentEvent.builder(it).build()
                             }
-                    )
+                    ).delayElements(this.delay)
             }
 
             @Suppress("DuplicatedCode")
@@ -99,7 +101,7 @@ class ApiController (
                 ServerSentEvent.builder($$"flare$terminated")
                     .event($$"flare$terminated")
                     .build()
-            ))
+            )).delayElements(this.delay)
         }
     }
 
@@ -126,7 +128,7 @@ class ApiController (
                             .map {
                                 ServerSentEvent.builder(it).build()
                             }
-                    )
+                    ).delayElements(this.delay)
             }
 
             @Suppress("DuplicatedCode")
@@ -142,7 +144,7 @@ class ApiController (
                 ServerSentEvent.builder($$"flare$terminated")
                     .event($$"flare$terminated")
                     .build()
-            ))
+            )).delayElements(this.delay)
         }
     }
 
