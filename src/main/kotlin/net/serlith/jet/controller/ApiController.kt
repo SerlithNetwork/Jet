@@ -82,9 +82,6 @@ class ApiController (
                         ServerSentEvent.builder(it).build()
                     }.concatWith(
                         this.sessionService.getOrCreateDataStream(key).asFlux()
-                            .map {
-                                ServerSentEvent.builder(it).build()
-                            }
                     ).delayElements(this.delay)
             }
 
@@ -125,9 +122,6 @@ class ApiController (
                         ServerSentEvent.builder(it).build()
                     }.concatWith(
                         this.sessionService.getOrCreateTimelineStream(key).asFlux()
-                            .map {
-                                ServerSentEvent.builder(it).build()
-                            }
                     ).delayElements(this.delay)
             }
 

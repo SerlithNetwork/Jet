@@ -2,6 +2,7 @@ package net.serlith.jet.service
 
 import net.serlith.jet.util.SessionData
 import org.slf4j.LoggerFactory
+import org.springframework.http.codec.ServerSentEvent
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
@@ -18,31 +19,45 @@ class SessionService {
 
     private final val logger = LoggerFactory.getLogger(this::class.java)
 
-    private final val dataStreams: ConcurrentMap<String, Sinks.Many<String>> = ConcurrentHashMap()
-    private final val timelineStreams: ConcurrentMap<String, Sinks.Many<String>> = ConcurrentHashMap()
+    private final val dataStreams: ConcurrentMap<String, Sinks.Many<ServerSentEvent<String>>> = ConcurrentHashMap()
+    private final val timelineStreams: ConcurrentMap<String, Sinks.Many<ServerSentEvent<String>>> = ConcurrentHashMap()
 
     private final val cache: ConcurrentMap<String, SessionData> = ConcurrentHashMap()
 
     private final val encoder = Base64.getEncoder()
 
-    final fun getOrCreateDataStream(key: String): Sinks.Many<String> {
+    final fun getOrCreateDataStream(key: String): Sinks.Many<ServerSentEvent<String>> {
         return this.dataStreams.computeIfAbsent(key) {
             Sinks.many().multicast().onBackpressureBuffer()
         }
     }
 
     final fun completeDataStream(key: String) {
-        this.dataStreams.remove(key)?.tryEmitComplete()
+        this.dataStreams.remove(key)?.let {
+            it.tryEmitNext(
+                ServerSentEvent.builder($$"flare$terminated")
+                    .event($$"flare$terminated")
+                    .build()
+            )
+            it.tryEmitComplete()
+        }
     }
 
-    final fun getOrCreateTimelineStream(key: String): Sinks.Many<String> {
+    final fun getOrCreateTimelineStream(key: String): Sinks.Many<ServerSentEvent<String>> {
         return this.timelineStreams.computeIfAbsent(key) {
             Sinks.many().multicast().onBackpressureBuffer()
         }
     }
 
     final fun completeTimelineStream(key: String) {
-        this.timelineStreams.remove(key)?.tryEmitComplete()
+        this.timelineStreams.remove(key)?.let {
+            it.tryEmitNext(
+                ServerSentEvent.builder($$"flare$terminated")
+                    .event($$"flare$terminated")
+                    .build()
+            )
+            it.tryEmitComplete()
+        }
     }
 
     final fun submitProfiler(key: String) {
@@ -60,13 +75,17 @@ class SessionService {
     final fun submitDataToCache(key: String, data: ByteArray) {
         val encoded = this.encoder.encodeToString(data)
         this.cache[key]?.offerData(encoded)
-        this.dataStreams[key]?.tryEmitNext(encoded)
+        this.dataStreams[key]?.tryEmitNext(
+            ServerSentEvent.builder(encoded).build()
+        )
     }
 
     final fun submitTimelineToCache(key: String, data: ByteArray) {
         val encoded = this.encoder.encodeToString(data)
         this.cache[key]?.offerTimeline(encoded)
-        this.timelineStreams[key]?.tryEmitNext(encoded)
+        this.timelineStreams[key]?.tryEmitNext(
+            ServerSentEvent.builder(encoded).build()
+        )
     }
 
     final fun isProfilerLive(key: String): Boolean {
