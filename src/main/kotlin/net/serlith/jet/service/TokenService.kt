@@ -41,8 +41,12 @@ class TokenService {
         this.tokens = input.tokens.toSet()
     }
 
+    final fun isInstanceOpen(): Boolean {
+        return this.tokens.isEmpty()
+    }
+
     final fun isValid(token: String?): Boolean {
-        if (this.tokens.isEmpty()) return true
+        if (this.isInstanceOpen()) return true
         return this.tokens.any { i -> i.key == token }
     }
 

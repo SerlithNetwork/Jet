@@ -143,6 +143,10 @@ class RootController (
         request: HttpServletRequest,
     ) : ResponseEntity<String> {
 
+        if (this.tokenService.isInstanceOpen()) {
+            return ResponseEntity.ok("@everyone")
+        }
+
         val authorization = request.getHeader("Authorization") ?: return this.notFound
         val key = authorization.removePrefix("token ")
         val owner = this.tokenService.getOwner(key) ?: return this.notFound
