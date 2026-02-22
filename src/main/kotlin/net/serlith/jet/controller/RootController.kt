@@ -26,6 +26,7 @@ import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
+import kotlin.math.min
 
 @RestController
 class RootController (
@@ -39,6 +40,9 @@ class RootController (
 
     private final val logger = LoggerFactory.getLogger(RootController::class.java)
     private final val sha256 = MessageDigest.getInstance("SHA-256")
+
+    private final val minKeyLength = 12
+    private final val maxKeyLength = 24
 
     private final val ok = Mono.just("{}")
     private final val notFound = Mono.error<String>(ResponseStatusException(HttpStatus.NOT_FOUND))
@@ -111,9 +115,11 @@ class RootController (
             this.flareRepository.getAllKeys()
                 .collectList().flatMap { keys ->
 
-                    var key = String.randomAlphanumeric(12)
+                    var size = this.minKeyLength
+                    var key = String.randomAlphanumeric(this.minKeyLength)
                     while (key in keys) {
-                        key = String.randomAlphanumeric(12)
+                        size = min(this.maxKeyLength, size + 1)
+                        key = String.randomAlphanumeric(size)
                     }
 
                     val profile = FlareProfile(
