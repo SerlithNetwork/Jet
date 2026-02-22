@@ -59,6 +59,7 @@ class RootController (
         val token = request.getHeader("Authorization").removePrefix("token ")
         val user = this.tokenService.getOwner(token) ?: "Unknown"
 
+        this.logger.info("A new profiler session was requested for user '$user'")
         return Mono.fromCallable {
             GZIPInputStream(data.inputStream()).use { gzip ->
                 ProfilerFileProto.CreateProfile.parseFrom(gzip)
