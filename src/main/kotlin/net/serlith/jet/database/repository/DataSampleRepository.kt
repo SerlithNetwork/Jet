@@ -1,9 +1,10 @@
 package net.serlith.jet.database.repository
 
 import net.serlith.jet.database.types.DataSample
-import org.springframework.data.repository.CrudRepository
+import org.springframework.data.repository.reactive.ReactiveCrudRepository
+import reactor.core.publisher.Flux
 
-interface DataSampleRepository : CrudRepository<DataSample, Long> {
-    fun findByProfileKey(key: String): List<DataSample>
-    fun deleteAllByProfileKey(key: String)
+interface DataSampleRepository : ReactiveCrudRepository<DataSample, Long> {
+    fun findAllByProfile(key: String): Flux<DataSample>
+    fun deleteAllByProfile(key: String)
 }

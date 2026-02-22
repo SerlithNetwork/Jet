@@ -1,8 +1,6 @@
 package net.serlith.jet.controller
 
 import co.technove.flare.proto.ProfilerFileProto
-import com.google.protobuf.CodedInputStream
-import com.google.protobuf.InvalidProtocolBufferException
 import jakarta.servlet.http.HttpServletRequest
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.types.FlareProfile
@@ -14,14 +12,16 @@ import net.serlith.jet.service.TokenService
 import net.serlith.jet.types.CreateProfileResponse
 import net.serlith.jet.util.randomAlphanumeric
 import org.slf4j.LoggerFactory
-import org.springframework.http.ResponseEntity
+import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.server.ResponseStatusException
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
 import java.util.zip.GZIPOutputStream
@@ -37,120 +37,182 @@ class RootController (
 ) {
 
     private final val logger = LoggerFactory.getLogger(RootController::class.java)
-    private final val ok = ResponseEntity.ok("{}")
-    private final val notFound = ResponseEntity.notFound().build<String>()
-    private final val badRequest = ResponseEntity.badRequest().build<String>()
     private final val sha256 = MessageDigest.getInstance("SHA-256")
+
+    private final val ok = Mono.just("{}")
+    private final val notFound = Mono.error<String>(ResponseStatusException(HttpStatus.NOT_FOUND))
+    private final val badRequest = Mono.error<String>(ResponseStatusException(HttpStatus.BAD_REQUEST))
+    private final val unavailable = Mono.error<String>(ResponseStatusException(HttpStatus.SERVICE_UNAVAILABLE))
 
 
     @PostMapping("/create")
     fun postCreate(
         request: HttpServletRequest,
         @RequestBody data: ByteArray,
-    ): ResponseEntity<CreateProfileResponse> {
+    ): Mono<CreateProfileResponse> {
 
         val token = request.getHeader("Authorization").removePrefix("token ")
         val user = this.tokenService.getOwner(token) ?: "Unknown"
 
-        val profiler: ProfilerFileProto.CreateProfile
-        try {
+        return Mono.fromCallable {
             GZIPInputStream(data.inputStream()).use { gzip ->
-                profiler = ProfilerFileProto.CreateProfile.parseFrom(gzip)
+                ProfilerFileProto.CreateProfile.parseFrom(gzip)
             }
-        } catch (_: IOException) {
-            this.logger.info("User '$user' send invalid data from instance at ${request.remoteAddr}:${request.remotePort}")
-            return ResponseEntity.badRequest().build()
-        }
+        }.subscribeOn(
+            Schedulers.boundedElastic()
+        ).flatMap { profiler ->
 
-        val splits = profiler.v3.versionsMap["Primary Version"]?.split("|", limit = 2) ?: emptyList()
+            val splits = profiler.v3.versionsMap["Primary Version"]?.split("|", limit = 2) ?: emptyList()
 
-        var serverBrand = "<undefined>"
-        var serverVersion = "<undefined>"
-        if (splits.size == 1) {
-            serverVersion = splits[0].trim()
-        } else if (splits.size == 2) {
-            serverBrand = splits[0].trim()
-            serverVersion = splits[1].trim()
-        }
+            var serverBrand = "<undefined>"
+            var serverVersion = "<undefined>"
+            if (splits.size == 1) {
+                serverVersion = splits[0].trim()
+            } else if (splits.size == 2) {
+                serverBrand = splits[0].trim()
+                serverVersion = splits[1].trim()
+            }
 
-        // Redact confidential entries in configs
-        val redactedConfigs = profiler.configsList.map { config ->
-            config.toBuilder()
-                .setContents(this.redactionService.sanitize(config.contents))
+            // Redact confidential entries in configs
+            val redactedConfigs = profiler.configsList.map { config ->
+                config.toBuilder()
+                    .setContents(this.redactionService.sanitize(config.contents))
+                    .build()
+            }
+            val redactedProfiler = profiler.toBuilder()
+                .clearConfigs()
+                .addAllConfigs(redactedConfigs)
                 .build()
-        }
-        val redactedProfiler = profiler.toBuilder()
-            .clearConfigs()
-            .addAllConfigs(redactedConfigs)
-            .build()
-        val redactedRaw = ByteArrayOutputStream()
-        try {
-            GZIPOutputStream(redactedRaw).use { gzip ->
-                gzip.write(redactedProfiler.toByteArray())
-            }
-        } catch (e: IOException) {
-            this.logger.error("Failed to compress profiler back: ${e.message}")
-            return ResponseEntity.badRequest().build()
-        }
 
-        var key = String.randomAlphanumeric(12)
-        val keys = this.flareRepository.getAllKeys()
-        while (key in keys) {
-            key = String.randomAlphanumeric(13)
-        }
-
-        val redactedBytes = redactedRaw.toByteArray()
-        this.flareRepository.save(
-            FlareProfile().apply {
-                this.key = key
-
-                this.serverBrand = serverBrand
-                this.serverVersion = serverVersion
-
-                this.osFamily = profiler.os.family
-                this.osVersion = profiler.os.version
-
-                this.jvmVendor = profiler.vmoptions.vendor
-                this.jvmVersion = profiler.vmoptions.version
-
-                this.raw = redactedBytes
-            }
-        )
-
-        this.sessionService.submitProfiler(key)
-        this.thumbnailService.storeThumbnail(
-            key = key,
-            platform = serverBrand,
-            version = serverVersion,
-            osFamily = profiler.os.family,
-            osVersion = profiler.os.version,
-            jvmName = profiler.vmoptions.vendor,
-            jvmVersion = profiler.vmoptions.version
-        )
-
-        this.logger.info("User '$user' created a new profile '$key' for instance at ${request.remoteAddr}:${request.remotePort}")
-        val hash = this.sha256.digest("$token:$key".toByteArray())
-        return ResponseEntity.ok(
-            CreateProfileResponse(
-                id = key,
-                key = hash.toHexString(),
+            return@flatMap Mono.zip(
+                Mono.just(serverBrand),
+                Mono.just(serverVersion),
+                Mono.just(redactedProfiler),
+                Mono.just(profiler),
             )
-        )
+
+        }.flatMap { tuple ->
+
+            val serverBrand = tuple.t1
+            val serverVersion = tuple.t2
+            val redactedProfiler = tuple.t3
+            val profiler = tuple.t4
+
+            return@flatMap Mono.fromCallable {
+                val redactedRaw = ByteArrayOutputStream()
+                GZIPOutputStream(redactedRaw).use { gzip ->
+                    gzip.write(redactedProfiler.toByteArray())
+                }
+                return@fromCallable redactedRaw.toByteArray()
+            }.subscribeOn(
+                Schedulers.boundedElastic()
+            ).flatMap { bytes ->
+                return@flatMap Mono.zip(
+                    Mono.just(serverBrand),
+                    Mono.just(serverVersion),
+                    Mono.just(profiler),
+                    Mono.just(bytes),
+                )
+            }
+        }.flatMap { tuple ->
+
+            val serverBrand = tuple.t1
+            val serverVersion = tuple.t2
+            val profiler = tuple.t3
+            val bytes = tuple.t4
+
+            val keys = this.flareRepository.getAllKeys()
+                .collectList()
+
+            return@flatMap Mono.zip(
+                Mono.just(serverBrand),
+                Mono.just(serverVersion),
+                Mono.just(profiler),
+                Mono.just(bytes),
+                keys,
+            )
+
+        }.flatMap { tuple ->
+
+            val serverBrand = tuple.t1
+            val serverVersion = tuple.t2
+            val profiler = tuple.t3
+            val bytes = tuple.t4
+            val keys = tuple.t5
+
+            var key = String.randomAlphanumeric(12)
+            while (key in keys) {
+                key = String.randomAlphanumeric(12)
+            }
+
+            val profile = FlareProfile(
+                key = key,
+                serverBrand = serverBrand,
+                serverVersion = serverVersion,
+                osFamily = profiler.os.family,
+                osVersion = profiler.os.version,
+                jvmVendor = profiler.vmoptions.vendor,
+                jvmVersion = profiler.vmoptions.version,
+                raw = bytes
+            )
+
+            return@flatMap this.flareRepository.save(profile)
+                .flatMap {
+                    return@flatMap Mono.zip(
+                        Mono.just(serverBrand),
+                        Mono.just(serverVersion),
+                        Mono.just(profiler),
+                        Mono.just(key),
+                    )
+                }
+
+        }.flatMap { tuple ->
+
+            val serverBrand = tuple.t1
+            val serverVersion = tuple.t2
+            val profiler = tuple.t3
+            val key = tuple.t4
+
+            this.sessionService.submitProfiler(key)
+            return@flatMap Mono.fromCallable {
+                this.thumbnailService.storeThumbnail(
+                    key = key,
+                    platform = serverBrand,
+                    version = serverVersion,
+                    osFamily = profiler.os.family,
+                    osVersion = profiler.os.version,
+                    jvmName = profiler.vmoptions.vendor,
+                    jvmVersion = profiler.vmoptions.version
+                )
+                return@fromCallable key
+
+            }.subscribeOn(
+                Schedulers.boundedElastic()
+            )
+
+        }.map { key ->
+            val hash = this.sha256.digest("$token:$key".toByteArray())
+            return@map CreateProfileResponse(id = key, key = hash.toHexString())
+        }.onErrorMap { e ->
+            this.logger.info("Failed to create profile for user '$user': ${e.message}")
+            return@onErrorMap ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid input")
+        }
+
     }
 
     @GetMapping("/license")
     fun getLicense(
         request: HttpServletRequest,
-    ) : ResponseEntity<String> {
+    ) : Mono<String> {
 
         if (this.tokenService.isInstanceOpen()) {
-            return ResponseEntity.ok("@everyone")
+            return Mono.just("@everyone")
         }
 
         val authorization = request.getHeader("Authorization") ?: return this.notFound
         val key = authorization.removePrefix("token ")
         val owner = this.tokenService.getOwner(key) ?: return this.notFound
-        return ResponseEntity.ok(owner)
+        return Mono.just(owner)
     }
 
     @PostMapping("/{id}/{key}")
@@ -159,7 +221,7 @@ class RootController (
         @PathVariable("id") key: String,
         @PathVariable("key") hash: String,
         @RequestBody data: ByteArray,
-    ) : ResponseEntity<String> {
+    ) : Mono<String> {
 
         // Users cannot submit data to other user's session
         if (!this.ownsSession(request, hash, key)) {
@@ -173,28 +235,16 @@ class RootController (
             return this.notFound
         }
 
-        try {
-            GZIPInputStream(data.inputStream()).use { gzip ->
-                ProfilerFileProto.AirplaneProfileFile.parseFrom(
-                    CodedInputStream.newInstance(gzip).apply {
-                        this.setRecursionLimit(5000)
-                    }
-                )
-            }
-        } catch (e: InvalidProtocolBufferException) {
-            this.logger.error("Invalid protocol buffer (data) submitted for $key: ${e.message}")
-            return this.badRequest
-        } catch (e: IOException) {
-            this.logger.info("Invalid buffer (data) submitted for $key: ${e.message}")
-            return this.badRequest
-        }
-
         // Refresh sessions
         this.sessionService.submitDataToCache(key, data)
 
         // Store data
-        this.profileService.pushData(key, data)
-        return this.ok
+        return this.profileService.pushData(key, data).flatMap { success ->
+            if (success) {
+                return@flatMap this.ok
+            }
+            return@flatMap this.unavailable
+        }
     }
 
     @PostMapping("/{id}/{key}/timeline")
@@ -203,7 +253,7 @@ class RootController (
         @PathVariable("id") key: String,
         @PathVariable("key") hash: String,
         @RequestBody data: ByteArray,
-    ) : ResponseEntity<String> {
+    ) : Mono<String> {
 
         // Users cannot submit data to other user's session
         if (!this.ownsSession(request, hash, key)) {
@@ -217,24 +267,16 @@ class RootController (
             return this.notFound
         }
 
-        try {
-            GZIPInputStream(data.inputStream()).use { gzip ->
-                ProfilerFileProto.TimelineFile.parseFrom(gzip)
-            }
-        } catch (e: InvalidProtocolBufferException) {
-            this.logger.error("Invalid protocol buffer (timeline) submitted for $key: ${e.message}")
-            return this.badRequest
-        } catch (e: IOException) {
-            this.logger.info("Invalid buffer (timeline) submitted for $key: ${e.message}")
-            return this.badRequest
-        }
-
         // Refresh sessions
         this.sessionService.submitTimelineToCache(key, data)
 
         // Store timeline
-        this.profileService.pushTimeline(key, data)
-        return this.ok
+        return this.profileService.pushTimeline(key, data).flatMap { success ->
+            if (success) {
+                return@flatMap this.ok
+            }
+            return@flatMap this.unavailable
+        }
     }
 
     private final fun ownsSession(request: HttpServletRequest, hash: String, key: String): Boolean {
