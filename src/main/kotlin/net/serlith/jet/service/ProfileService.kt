@@ -61,9 +61,10 @@ class ProfileService (
 
     @Transactional
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
-    fun purgeOldProfiles() {
+    fun purgeOldProfiles(): Mono<Void> {
         val cleanup = LocalDateTime.now().minusDays(this.cleanupDays)
         this.flareRepository.deleteAllByCreatedAtBefore(cleanup)
+        return Mono.empty()
     }
 
 }

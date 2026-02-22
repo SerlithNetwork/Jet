@@ -6,5 +6,4 @@ import reactor.core.publisher.Flux
 
 interface TimelineSampleRepository : ReactiveCrudRepository<TimelineSample, Long> {
     fun findAllByProfile(key: String): Flux<TimelineSample>
-    fun deleteAllByProfile(key: String)
 }

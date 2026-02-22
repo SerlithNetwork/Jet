@@ -10,6 +10,8 @@ import java.time.LocalDateTime
 class FlareProfile (
 
     @Id
+    val id: Long? = null,
+
     @Column(value = "profile_key")
     val key: String,
 

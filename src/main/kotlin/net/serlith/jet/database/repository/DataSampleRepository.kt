@@ -6,5 +6,4 @@ import reactor.core.publisher.Flux
 
 interface DataSampleRepository : ReactiveCrudRepository<DataSample, Long> {
     fun findAllByProfile(key: String): Flux<DataSample>
-    fun deleteAllByProfile(key: String)
 }

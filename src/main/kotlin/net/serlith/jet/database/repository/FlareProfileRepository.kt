@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 @Repository
 interface FlareProfileRepository : ReactiveCrudRepository<FlareProfile, String> {
 
-    @Query("select profile.key from FlareProfile profile")
+    @Query("select PROFILE_KEY from FLARE_PROFILE")
     fun getAllKeys(): Flux<String>
 
     fun existsFlareProfileByKey(key: String): Mono<Boolean>
