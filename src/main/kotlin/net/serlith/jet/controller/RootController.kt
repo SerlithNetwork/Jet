@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
+import reactor.util.function.Tuples
 import java.io.ByteArrayOutputStream
 import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
@@ -84,52 +85,20 @@ class RootController (
                 .addAllConfigs(redactedConfigs)
                 .build()
 
-            return@flatMap Mono.zip(
-                Mono.just(serverBrand),
-                Mono.just(serverVersion),
-                Mono.just(redactedProfiler),
-                Mono.just(profiler),
-            )
-
-        }.flatMap { tuple ->
-
-            val serverBrand = tuple.t1
-            val serverVersion = tuple.t2
-            val redactedProfiler = tuple.t3
-            val profiler = tuple.t4
-
             return@flatMap Mono.fromCallable {
-                val redactedRaw = ByteArrayOutputStream()
-                GZIPOutputStream(redactedRaw).use { gzip ->
-                    gzip.write(redactedProfiler.toByteArray())
+                ByteArrayOutputStream().use { redactedRaw ->
+                    GZIPOutputStream(redactedRaw).use { gzip ->
+                        gzip.write(redactedProfiler.toByteArray())
+                    }
+                    return@fromCallable Tuples.of(
+                        serverBrand,
+                        serverVersion,
+                        profiler,
+                        redactedRaw.toByteArray(),
+                    )
                 }
-                return@fromCallable redactedRaw.toByteArray()
             }.subscribeOn(
                 Schedulers.boundedElastic()
-            ).flatMap { bytes ->
-                return@flatMap Mono.zip(
-                    Mono.just(serverBrand),
-                    Mono.just(serverVersion),
-                    Mono.just(profiler),
-                    Mono.just(bytes),
-                )
-            }
-        }.flatMap { tuple ->
-
-            val serverBrand = tuple.t1
-            val serverVersion = tuple.t2
-            val profiler = tuple.t3
-            val bytes = tuple.t4
-
-            val keys = this.flareRepository.getAllKeys()
-                .collectList()
-
-            return@flatMap Mono.zip(
-                Mono.just(serverBrand),
-                Mono.just(serverVersion),
-                Mono.just(profiler),
-                Mono.just(bytes),
-                keys,
             )
 
         }.flatMap { tuple ->
@@ -138,32 +107,33 @@ class RootController (
             val serverVersion = tuple.t2
             val profiler = tuple.t3
             val bytes = tuple.t4
-            val keys = tuple.t5
 
-            var key = String.randomAlphanumeric(12)
-            while (key in keys) {
-                key = String.randomAlphanumeric(12)
-            }
+            this.flareRepository.getAllKeys()
+                .collectList().flatMap { keys ->
 
-            val profile = FlareProfile(
-                key = key,
-                serverBrand = serverBrand,
-                serverVersion = serverVersion,
-                osFamily = profiler.os.family,
-                osVersion = profiler.os.version,
-                jvmVendor = profiler.vmoptions.vendor,
-                jvmVersion = profiler.vmoptions.version,
-                raw = bytes
-            )
+                    var key = String.randomAlphanumeric(12)
+                    while (key in keys) {
+                        key = String.randomAlphanumeric(12)
+                    }
 
-            return@flatMap this.flareRepository.save(profile)
-                .flatMap {
-                    return@flatMap Mono.zip(
-                        Mono.just(serverBrand),
-                        Mono.just(serverVersion),
-                        Mono.just(profiler),
-                        Mono.just(key),
+                    val profile = FlareProfile(
+                        key = key,
+                        serverBrand = serverBrand,
+                        serverVersion = serverVersion,
+                        osFamily = profiler.os.family,
+                        osVersion = profiler.os.version,
+                        jvmVendor = profiler.vmoptions.vendor,
+                        jvmVersion = profiler.vmoptions.version,
+                        raw = bytes
                     )
+
+                    return@flatMap this.flareRepository.save(profile)
+                        .thenReturn(Tuples.of(
+                            serverBrand,
+                            serverVersion,
+                            profiler,
+                            key,
+                        ))
                 }
 
         }.flatMap { tuple ->
