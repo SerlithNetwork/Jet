@@ -1,9 +1,9 @@
 package net.serlith.jet.database.repository
 
 import net.serlith.jet.database.types.TimelineSample
-import org.springframework.data.repository.CrudRepository
+import org.springframework.data.r2dbc.repository.R2dbcRepository
+import reactor.core.publisher.Flux
 
-interface TimelineSampleRepository : CrudRepository<TimelineSample, Long> {
-    fun findByProfileKey(key: String): List<TimelineSample>
-    fun deleteAllByProfileKey(key: String)
+interface TimelineSampleRepository : R2dbcRepository<TimelineSample, Long> {
+    fun findAllByProfile(key: String): Flux<TimelineSample>
 }

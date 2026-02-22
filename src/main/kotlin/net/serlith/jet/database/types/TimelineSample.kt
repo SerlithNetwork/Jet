@@ -1,29 +1,20 @@
 package net.serlith.jet.database.types
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
-import jakarta.persistence.Id
-import jakarta.persistence.JoinColumn
-import jakarta.persistence.Lob
-import jakarta.persistence.ManyToOne
-import jakarta.persistence.Table
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
 
-@Entity
+@Suppress("unused")
 @Table(name = "flare_sample_timeline")
-class TimelineSample {
+class TimelineSample (
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    var id: Long = 0
+    val id: Long? = null,
 
-    @ManyToOne
-    @JoinColumn(name = "profile_key", nullable = false)
-    lateinit var profile: FlareProfile
+    @Column(value = "profile_key")
+    val profile: String,
 
-    @Lob
-    @Column(name = "raw", columnDefinition = "LONGBLOB", nullable = false)
-    lateinit var raw: ByteArray
+    @Column(value = "raw")
+    val raw: ByteArray,
 
-}
+)

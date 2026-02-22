@@ -23,7 +23,3 @@ class SessionData {
     }
 
 }
-
-data class SingleDataHolder ( // Socket.IO is an idiot and trails a byte when using plain ByteArray
-    val payload: String,
-)

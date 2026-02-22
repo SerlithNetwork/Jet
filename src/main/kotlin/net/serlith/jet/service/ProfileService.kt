@@ -1,6 +1,5 @@
 package net.serlith.jet.service
 
-import jakarta.transaction.Transactional
 import net.serlith.jet.database.repository.DataSampleRepository
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.repository.TimelineSampleRepository
@@ -9,9 +8,10 @@ import net.serlith.jet.database.types.TimelineSample
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import reactor.core.publisher.Mono
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
-import kotlin.jvm.optionals.getOrNull
 
 @Service
 class ProfileService (
@@ -24,38 +24,47 @@ class ProfileService (
     private var cleanupDays: Long = 0
 
     @Transactional
-    fun pushData(key: String, raw: ByteArray): Boolean {
-        val flare = this.flareRepository.findById(key).getOrNull() ?: return false
-        this.dataRepository.save(
-            DataSample().apply {
-                this.profile = flare
-                this.raw = raw
+    fun pushData(key: String, raw: ByteArray): Mono<Boolean> {
+
+        return this.flareRepository.existsByKey(key).flatMap { exists ->
+            if (!exists) {
+                return@flatMap Mono.just(false)
             }
-        )
-        return true
+
+            val data = DataSample(
+                profile = key,
+                raw = raw,
+            )
+
+            return@flatMap this.dataRepository.save(data)
+                .thenReturn(true)
+        }
     }
 
     @Transactional
-    fun pushTimeline(key: String, raw: ByteArray): Boolean {
-        val flare = this.flareRepository.findById(key).getOrNull() ?: return false
-        this.timelineRepository.save(
-            TimelineSample().apply {
-                this.profile = flare
-                this.raw = raw
+    fun pushTimeline(key: String, raw: ByteArray): Mono<Boolean> {
+
+        return this.flareRepository.existsByKey(key).flatMap { exists ->
+            if (!exists) {
+                return@flatMap Mono.just(false)
             }
-        )
-        return true
+
+            val timeline = TimelineSample(
+                profile = key,
+                raw = raw,
+            )
+
+            return@flatMap this.timelineRepository.save(timeline)
+                .thenReturn(true)
+        }
     }
 
     @Transactional
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
-    fun purgeOldProfiles() {
+    fun purgeOldProfiles(): Mono<Void> {
         val cleanup = LocalDateTime.now().minusDays(this.cleanupDays)
-        this.flareRepository.findAllByCreatedAtBefore(cleanup).forEach { profile ->
-            this.dataRepository.deleteAllByProfileKey(profile.key)
-            this.timelineRepository.deleteAllByProfileKey(profile.key)
-            this.flareRepository.deleteById(profile.key)
-        }
+        this.flareRepository.deleteAllByCreatedAtBefore(cleanup)
+        return Mono.empty()
     }
 
 }

@@ -1,45 +1,44 @@
 package net.serlith.jet.database.types
 
-import jakarta.persistence.Column
-import jakarta.persistence.Entity
-import jakarta.persistence.Id
-import jakarta.persistence.Lob
-import jakarta.persistence.Table
 import org.springframework.data.annotation.CreatedDate
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Column
+import org.springframework.data.relational.core.mapping.Table
 import java.time.LocalDateTime
 
-@Entity
+@Suppress("unused")
 @Table(name = "flare_profile")
-class FlareProfile {
+class FlareProfile (
 
     @Id
-    @Column(name = "profile_key", nullable = false)
-    var key: String = ""
+    val id: Long? = null,
 
-    @Column(name = "server_brand", nullable = false)
-    var serverBrand: String = ""
+    @Column(value = "profile_key")
+    val key: String,
 
-    @Column(name = "server_version", nullable = false)
-    var serverVersion: String = ""
+    @Column(value = "server_brand")
+    val serverBrand: String,
 
-    @Column(name = "os_family", nullable = false)
-    var osFamily: String = ""
+    @Column(value = "server_version")
+    val serverVersion: String,
 
-    @Column(name = "os_version", nullable = false)
-    var osVersion: String = ""
+    @Column(value = "os_family")
+    val osFamily: String,
 
-    @Column(name = "jvm_vendor", nullable = false)
-    var jvmVendor: String = ""
+    @Column(value = "os_version")
+    val osVersion: String,
 
-    @Column(name = "jvm_version", nullable = false)
-    var jvmVersion: String = ""
+    @Column(value = "jvm_vendor")
+    val jvmVendor: String,
 
-    @Lob
-    @Column(name = "raw", columnDefinition = "LONGBLOB", nullable = false)
-    lateinit var raw: ByteArray
+    @Column(value = "jvm_version")
+    val jvmVersion: String,
+
+    @Column(value = "raw")
+    val raw: ByteArray,
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false)
-    var createdAt: LocalDateTime = LocalDateTime.now()
+    @Column(value = "created_at")
+    val createdAt: LocalDateTime? = null,
 
-}
+)
