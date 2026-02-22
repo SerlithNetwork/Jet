@@ -2,13 +2,20 @@
 services:
   jet:
     image: ghcr.io/serlithnetwork/jet
-    ports:
-      - "9420:9420"
-      - "9430:9430"
+    container_name: jet
+    expose:
+      - "9420"
     volumes:
-      - pictures:/opt/jet/pictures
-      - config:/opt/jet/config
+      - jet_pictures:/opt/jet/pictures
+      - jet_config:/opt/jet/config
+    environment:
+      - JET_DATABASE_URL=r2dbc:postgresql://postgres_container:5432/flare
+      - JET_DATABASE_USER=jet
+      - JET_DATABASE_PASSWORD=
+      - JET_MAX_REQUEST_SIZE=50KB
+      - JET_CLEANUP_DAYS=30
+      - JET_THUMBNAIL_WORKER_THREADS=2
 
 volumes:
-  pictures: {}
-  config: {}
+  jet_pictures: {}
+  jet_config: {}
