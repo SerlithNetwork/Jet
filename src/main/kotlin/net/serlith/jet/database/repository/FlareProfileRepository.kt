@@ -14,8 +14,6 @@ interface FlareProfileRepository : ReactiveCrudRepository<FlareProfile, String> 
     @Query("select profile.key from FlareProfile profile")
     fun getAllKeys(): Flux<String>
 
-    fun findAllByCreatedAtBefore(createdBefore: LocalDateTime): Flux<FlareProfile>
-
     fun existsFlareProfileByKey(key: String): Mono<Boolean>
 
     fun deleteAllByCreatedAtBefore(createdBefore: LocalDateTime)
