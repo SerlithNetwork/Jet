@@ -51,7 +51,7 @@ class ApiController (
     ): Mono<String> {
 
         this.logger.info("Requested profile '$key' from ${request.remoteAddr}:${request.remotePort}")
-        return this.flareRepository.findById(key).map { flare ->
+        return this.flareRepository.findByKey(key).map { flare ->
             this.encoder.encodeToString(flare.raw)
         }.switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
     }

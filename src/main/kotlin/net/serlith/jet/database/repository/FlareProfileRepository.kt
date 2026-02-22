@@ -9,7 +9,7 @@ import reactor.core.publisher.Mono
 import java.time.LocalDateTime
 
 @Repository
-interface FlareProfileRepository : R2dbcRepository<FlareProfile, String> {
+interface FlareProfileRepository : R2dbcRepository<FlareProfile, Long> {
 
     @Query("select PROFILE_KEY from FLARE_PROFILE")
     fun getAllKeys(): Flux<String>
@@ -19,5 +19,7 @@ interface FlareProfileRepository : R2dbcRepository<FlareProfile, String> {
     fun deleteAllByCreatedAtBefore(createdBefore: LocalDateTime)
 
     fun existsByKey(key: String): Mono<Boolean>
+
+    fun findByKey(key: String): Mono<FlareProfile>
 
 }
