@@ -4,17 +4,17 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 
-@Suppress("UNUSED")
-@Table(name = "FLARE_SAMPLE_TIMELINE")
+@Suppress("unused")
+@Table(name = "flare_sample_timeline")
 class TimelineSample (
 
     @Id
     val id: Long? = null,
 
-    @Column(value = "PROFILE_KEY")
+    @Column(value = "profile_key")
     val profile: String,
 
-    @Column(value = "RAW")
+    @Column(value = "raw")
     val raw: ByteArray,
 
 )

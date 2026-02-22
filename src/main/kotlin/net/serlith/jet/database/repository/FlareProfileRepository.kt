@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 @Repository
 interface FlareProfileRepository : R2dbcRepository<FlareProfile, Long> {
 
-    @Query("select PROFILE_KEY from FLARE_PROFILE")
+    @Query("select profile_key from flare_profile")
     fun getAllKeys(): Flux<String>
 
     fun existsFlareProfileByKey(key: String): Mono<Boolean>
