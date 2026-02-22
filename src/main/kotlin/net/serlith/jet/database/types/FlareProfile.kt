@@ -6,38 +6,38 @@ import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 import java.time.LocalDateTime
 
-@Table(name = "flare_profile")
+@Table(name = "FLARE_PROFILE")
 class FlareProfile (
 
     @Id
     val id: Long? = null,
 
-    @Column(value = "profile_key")
+    @Column(value = "PROFILE_KEY")
     val key: String,
 
-    @Column(value = "server_brand")
+    @Column(value = "SERVER_BRAND")
     val serverBrand: String,
 
-    @Column(value = "server_version")
+    @Column(value = "SERVER_VERSION")
     val serverVersion: String,
 
-    @Column(value = "os_family")
+    @Column(value = "OS_FAMILY")
     val osFamily: String,
 
-    @Column(value = "os_version")
+    @Column(value = "OS_VERSION")
     val osVersion: String,
 
-    @Column(value = "jvm_vendor")
+    @Column(value = "JVM_VENDOR")
     val jvmVendor: String,
 
-    @Column(value = "jvm_version")
+    @Column(value = "JVM_VERSION")
     val jvmVersion: String,
 
-    @Column(value = "raw")
+    @Column(value = "RAW")
     val raw: ByteArray,
 
     @CreatedDate
-    @Column(value = "created_at")
+    @Column(value = "CREATED_AT")
     val createdAt: LocalDateTime? = null,
 
 )

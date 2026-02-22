@@ -4,16 +4,16 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 
-@Table(name = "flare_sample_timeline")
+@Table(name = "FLARE_SAMPLE_TIMELINE")
 class TimelineSample (
 
     @Id
     val id: Long? = null,
 
-    @Column(value = "profile_key")
+    @Column(value = "PROFILE_KEY")
     val profile: String,
 
-    @Column(value = "raw")
+    @Column(value = "RAW")
     val raw: ByteArray,
 
 )

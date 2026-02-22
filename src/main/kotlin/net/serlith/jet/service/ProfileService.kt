@@ -26,7 +26,7 @@ class ProfileService (
     @Transactional
     fun pushData(key: String, raw: ByteArray): Mono<Boolean> {
 
-        return this.flareRepository.existsById(key).flatMap { exists ->
+        return this.flareRepository.existsByKey(key).flatMap { exists ->
             if (!exists) {
                 return@flatMap Mono.just(false)
             }
@@ -44,7 +44,7 @@ class ProfileService (
     @Transactional
     fun pushTimeline(key: String, raw: ByteArray): Mono<Boolean> {
 
-        return this.flareRepository.existsById(key).flatMap { exists ->
+        return this.flareRepository.existsByKey(key).flatMap { exists ->
             if (!exists) {
                 return@flatMap Mono.just(false)
             }

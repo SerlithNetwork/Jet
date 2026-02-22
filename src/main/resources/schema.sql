@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS flare_profile (
     jvm_vendor VARCHAR(255) NOT NULL,
     jvm_version VARCHAR(255) NOT NULL,
     raw BYTEA NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS flare_sample_data (
