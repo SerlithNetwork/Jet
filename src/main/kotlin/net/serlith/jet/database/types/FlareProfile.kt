@@ -6,6 +6,7 @@ import org.springframework.data.relational.core.mapping.Column
 import org.springframework.data.relational.core.mapping.Table
 import java.time.LocalDateTime
 
+@Suppress("UNUSED")
 @Table(name = "FLARE_PROFILE")
 class FlareProfile (
 

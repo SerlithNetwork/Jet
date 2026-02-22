@@ -13,7 +13,11 @@ import java.io.File
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.Date
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 
 @Service
@@ -21,6 +25,11 @@ class ThumbnailService {
 
     @Value($$"${jet.cleanup.days:30}")
     private var cleanupDays: Long = 0
+
+    @Value($$"${jet.thumbnail.worker-threads:2}")
+    private var thumbnailWorkerThreads = 0
+
+    private final lateinit var executor: ExecutorService
 
     private final val directory = File("pictures")
     private final lateinit var templateResource: ClassPathResource
@@ -36,10 +45,23 @@ class ThumbnailService {
             this.fontMid = font.deriveFont(32f)
             this.fontSmall = font.deriveFont(24f)
         }
+
+        val counter = AtomicInteger(0)
+        this.executor = Executors.newFixedThreadPool(this.thumbnailWorkerThreads) { task ->
+            val thread = Thread(task)
+            thread.name = "Jet Thumbnail Worker - #${counter.incrementAndGet()}"
+            return@newFixedThreadPool thread
+        }
+    }
+
+    final fun storeThumbnail(key: String, platform: String, version: String, osFamily: String, osVersion: String, jvmName: String, jvmVersion: String): CompletableFuture<Void> {
+        return CompletableFuture.runAsync({
+            this.storeThumbnail0(key, platform, version, osFamily, osVersion, jvmName, jvmVersion)
+        }, this.executor)
     }
 
     @Suppress("DuplicatedCode")
-    final fun storeThumbnail(key: String, platform: String, version: String, osFamily: String, osVersion: String, jvmName: String, jvmVersion: String) {
+    private final fun storeThumbnail0(key: String, platform: String, version: String, osFamily: String, osVersion: String, jvmName: String, jvmVersion: String) {
         val template = this.templateResource.inputStream.use { inputStream -> ImageIO.read(inputStream) }
         val g2d = template.createGraphics()
 
@@ -105,8 +127,14 @@ class ThumbnailService {
         ImageIO.write(template, "PNG", File(directory, "$key.png"))
     }
 
+    final fun retrieveThumbnail(key: String): CompletableFuture<out ByteArrayInputStream?> {
+        return CompletableFuture.supplyAsync({
+            return@supplyAsync this.retrieveThumbnail0(key)
+        }, this.executor)
+    }
+
     // Maybe some cache will be a good idea in the future, but for now this is ok
-    final fun retrieveThumbnail(key: String): ByteArrayInputStream? {
+    private final fun retrieveThumbnail0(key: String): ByteArrayInputStream? {
         val thumbnail = File(directory, "$key.png")
         if (!thumbnail.exists()) {
             return null

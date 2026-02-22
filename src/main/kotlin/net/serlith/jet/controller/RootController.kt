@@ -144,7 +144,7 @@ class RootController (
             val key = tuple.t4
 
             this.sessionService.submitProfiler(key)
-            return@flatMap Mono.fromCallable {
+            return@flatMap Mono.fromFuture(
                 this.thumbnailService.storeThumbnail(
                     key = key,
                     platform = serverBrand,
@@ -154,11 +154,7 @@ class RootController (
                     jvmName = profiler.vmoptions.vendor,
                     jvmVersion = profiler.vmoptions.version
                 )
-                return@fromCallable key
-
-            }.subscribeOn(
-                Schedulers.boundedElastic()
-            )
+            ).thenReturn(key)
 
         }.map { key ->
             val hash = this.sha256.digest("$token:$key".toByteArray())

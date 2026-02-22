@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import reactor.core.scheduler.Schedulers
 import java.time.Duration
 import java.util.Base64
 
@@ -128,9 +127,7 @@ class ApiController (
             return Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
         }
 
-        return Mono.fromCallable {
-            this.thumbnailService.retrieveThumbnail(key)
-        }.subscribeOn(Schedulers.boundedElastic())
+        return Mono.fromFuture(this.thumbnailService.retrieveThumbnail(key))
             .flatMap { thumbnail ->
                 if (thumbnail == null) {
                     return@flatMap Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
