@@ -3,12 +3,12 @@ package net.serlith.jet.service
 import jakarta.annotation.PostConstruct
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
+import org.springframework.core.io.FileSystemResource
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.awt.Color
 import java.awt.Font
 import java.awt.RenderingHints
-import java.io.ByteArrayInputStream
 import java.io.File
 import java.time.Instant
 import java.time.temporal.ChronoUnit
@@ -127,19 +127,19 @@ class ThumbnailService {
         ImageIO.write(template, "PNG", File(directory, "$key.png"))
     }
 
-    final fun retrieveThumbnail(key: String): CompletableFuture<out ByteArrayInputStream?> {
+    final fun retrieveThumbnail(key: String): CompletableFuture<out FileSystemResource?> {
         return CompletableFuture.supplyAsync({
             return@supplyAsync this.retrieveThumbnail0(key)
         }, this.executor)
     }
 
     // Maybe some cache will be a good idea in the future, but for now this is ok
-    private final fun retrieveThumbnail0(key: String): ByteArrayInputStream? {
+    private final fun retrieveThumbnail0(key: String): FileSystemResource? {
         val thumbnail = File(directory, "$key.png")
         if (!thumbnail.exists()) {
             return null
         }
-        return ByteArrayInputStream(thumbnail.readBytes())
+        return FileSystemResource(thumbnail)
     }
 
 

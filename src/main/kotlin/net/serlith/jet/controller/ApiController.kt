@@ -8,10 +8,9 @@ import net.serlith.jet.service.SessionService
 import net.serlith.jet.service.ThumbnailService
 import net.serlith.jet.util.isAlphanumeric
 import org.slf4j.LoggerFactory
-import org.springframework.core.io.InputStreamResource
+import org.springframework.core.io.Resource
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import org.springframework.http.ResponseEntity
 import org.springframework.http.codec.ServerSentEvent
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -116,11 +115,11 @@ class ApiController (
         }
     }
 
-    @GetMapping("/thumbnail/{key}.png")
+    @GetMapping("/thumbnail/{key}.png", produces = [MediaType.IMAGE_PNG_VALUE])
     fun requestThumbnail(
         request: HttpServletRequest,
         @PathVariable key: String,
-    ): Mono<ResponseEntity<InputStreamResource>> { // I don't like this, but I need to provide MediaType.IMAGE_PNG
+    ): Mono<Resource> {
 
         if (!key.isAlphanumeric()) {
             this.logger.info("Requested profile with bad key '$key' from ${request.remoteAddr}:${request.remotePort}")
@@ -132,7 +131,7 @@ class ApiController (
                 if (thumbnail == null) {
                     return@flatMap Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
                 }
-                return@flatMap Mono.just(ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(InputStreamResource(thumbnail)))
+                return@flatMap Mono.just(thumbnail)
             }
     }
 
