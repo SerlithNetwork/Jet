@@ -35,7 +35,11 @@ class ApiController (
     private final val logger = LoggerFactory.getLogger(ApiController::class.java)
     private final val health = Mono.just("{\"status\":\"ok\"}")
     private final val encoder = Base64.getEncoder()
-    private final val delay = Duration.ofMillis(100)
+    private final val delay = Duration.ofMillis(150)
+
+    private final val terminate = ServerSentEvent.builder($$"flare$terminated")
+        .event($$"flare$terminated")
+        .build()
 
     @GetMapping("/health")
     fun requestHealth(): Mono<String> {
@@ -76,11 +80,7 @@ class ApiController (
 
             return@flatMapMany this.dataRepository.findAllByProfile(key).map { sample ->
                 ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
-            }.concatWith(Flux.just(
-                ServerSentEvent.builder($$"flare$terminated")
-                    .event($$"flare$terminated")
-                    .build()
-            )).delayElements(this.delay)
+            }.concatWith(Flux.just(this.terminate)).delayElements(this.delay)
         }
     }
 
@@ -107,11 +107,7 @@ class ApiController (
             @Suppress("DuplicatedCode")
             return@flatMapMany this.timelineRepository.findAllByProfile(key).map { sample ->
                 ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
-            }.concatWith(Flux.just(
-                ServerSentEvent.builder($$"flare$terminated")
-                    .event($$"flare$terminated")
-                    .build()
-            )).delayElements(this.delay)
+            }.concatWith(Flux.just(this.terminate)).delayElements(this.delay)
         }
     }
 

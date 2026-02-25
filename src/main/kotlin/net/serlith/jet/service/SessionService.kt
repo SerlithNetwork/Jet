@@ -23,8 +23,10 @@ class SessionService {
     private final val timelineStreams: ConcurrentMap<String, Sinks.Many<ServerSentEvent<String>>> = ConcurrentHashMap()
 
     private final val cache: ConcurrentMap<String, SessionData> = ConcurrentHashMap()
-
     private final val encoder = Base64.getEncoder()
+    private final val terminate = ServerSentEvent.builder($$"flare$terminated")
+        .event($$"flare$terminated")
+        .build()
 
     final fun getOrCreateDataStream(key: String): Sinks.Many<ServerSentEvent<String>> {
         return this.dataStreams.computeIfAbsent(key) {
@@ -34,11 +36,7 @@ class SessionService {
 
     final fun completeDataStream(key: String) {
         this.dataStreams.remove(key)?.let {
-            it.tryEmitNext(
-                ServerSentEvent.builder($$"flare$terminated")
-                    .event($$"flare$terminated")
-                    .build()
-            )
+            it.tryEmitNext(this.terminate)
             it.tryEmitComplete()
         }
     }
@@ -51,11 +49,7 @@ class SessionService {
 
     final fun completeTimelineStream(key: String) {
         this.timelineStreams.remove(key)?.let {
-            it.tryEmitNext(
-                ServerSentEvent.builder($$"flare$terminated")
-                    .event($$"flare$terminated")
-                    .build()
-            )
+            it.tryEmitNext(this.terminate)
             it.tryEmitComplete()
         }
     }
