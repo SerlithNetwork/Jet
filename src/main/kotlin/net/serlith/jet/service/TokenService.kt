@@ -46,7 +46,12 @@ class TokenService {
     }
 
     final fun isValid(token: String?): Boolean {
-        if (this.isInstanceOpen()) return true
+        if (token.isNullOrBlank()) {
+            return false
+        }
+        if (this.isInstanceOpen()) {
+            return true
+        }
         return this.tokens.any { i -> i.key == token }
     }
 
