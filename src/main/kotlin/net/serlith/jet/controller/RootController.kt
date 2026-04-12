@@ -1,7 +1,6 @@
 package net.serlith.jet.controller
 
 import co.technove.flare.proto.ProfilerFileProto
-import jakarta.servlet.http.HttpServletRequest
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.types.FlareProfile
 import net.serlith.jet.service.ProfileService
@@ -13,6 +12,7 @@ import net.serlith.jet.types.CreateProfileResponse
 import net.serlith.jet.util.randomAlphanumeric
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -52,11 +52,11 @@ class RootController (
 
     @PostMapping("/create")
     fun postCreate(
-        request: HttpServletRequest,
+        request: ServerHttpRequest,
         @RequestBody data: ByteArray,
     ): Mono<CreateProfileResponse> {
 
-        val token = request.getHeader("Authorization").removePrefix("token ")
+        val token = request.headers.getFirst("Authorization")!!.removePrefix("token ")
         val user = this.tokenService.getOwner(token) ?: "Unknown"
 
         this.logger.info("A new profiler session was requested for user '$user'")
@@ -175,14 +175,14 @@ class RootController (
 
     @GetMapping("/license")
     fun getLicense(
-        request: HttpServletRequest,
+        request: ServerHttpRequest,
     ) : Mono<String> {
 
         if (this.tokenService.isInstanceOpen()) {
             return Mono.just("@everyone")
         }
 
-        val authorization = request.getHeader("Authorization") ?: return this.notFound
+        val authorization = request.headers.getFirst("Authorization") ?: return this.notFound
         val key = authorization.removePrefix("token ")
         val owner = this.tokenService.getOwner(key) ?: return this.notFound
         return Mono.just(owner)
@@ -190,7 +190,7 @@ class RootController (
 
     @PostMapping("/{id}/{key}")
     fun postData(
-        request: HttpServletRequest,
+        request: ServerHttpRequest,
         @PathVariable("id") key: String,
         @PathVariable("key") hash: String,
         @RequestBody data: ByteArray,
@@ -222,7 +222,7 @@ class RootController (
 
     @PostMapping("/{id}/{key}/timeline")
     fun postTimeline(
-        request: HttpServletRequest,
+        request: ServerHttpRequest,
         @PathVariable("id") key: String,
         @PathVariable("key") hash: String,
         @RequestBody data: ByteArray,
@@ -252,8 +252,8 @@ class RootController (
         }
     }
 
-    private final fun ownsSession(request: HttpServletRequest, hash: String, key: String): Boolean {
-        val token = request.getHeader("Authorization").removePrefix("token ")
+    private final fun ownsSession(request: ServerHttpRequest, hash: String, key: String): Boolean {
+        val token = request.headers.getFirst("Authorization")!!.removePrefix("token ")
         val hash256 = this.sha256.digest("$token:$key".toByteArray())
         return hash256.toHexString() == hash
     }

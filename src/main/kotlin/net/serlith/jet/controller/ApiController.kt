@@ -1,6 +1,5 @@
 package net.serlith.jet.controller
 
-import jakarta.servlet.http.HttpServletRequest
 import net.serlith.jet.database.repository.DataSampleRepository
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.repository.TimelineSampleRepository
@@ -12,6 +11,7 @@ import org.springframework.core.io.Resource
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.codec.ServerSentEvent
+import org.springframework.http.server.reactive.ServerHttpRequest
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -48,11 +48,11 @@ class ApiController (
 
     @GetMapping("/profiler/{key}")
     fun requestProfiler(
-        request: HttpServletRequest,
+        request: ServerHttpRequest,
         @PathVariable key: String,
     ): Mono<String> {
 
-        this.logger.info("Requested profile '$key' from ${request.remoteAddr}:${request.remotePort}")
+        this.logger.info("Requested profile '$key' from ${request.remoteAddress}")
         return this.flareRepository.findByKey(key).map { flare ->
             this.encoder.encodeToString(flare.raw)
         }.switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
@@ -113,12 +113,12 @@ class ApiController (
 
     @GetMapping("/thumbnail/{key}.png", produces = [MediaType.IMAGE_PNG_VALUE])
     fun requestThumbnail(
-        request: HttpServletRequest,
+        request: ServerHttpRequest,
         @PathVariable key: String,
     ): Mono<Resource> {
 
         if (!key.isAlphanumeric()) {
-            this.logger.info("Requested profile with bad key '$key' from ${request.remoteAddr}:${request.remotePort}")
+            this.logger.info("Requested profile with bad key '$key' from ${request.remoteAddress}")
             return Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
         }
 
