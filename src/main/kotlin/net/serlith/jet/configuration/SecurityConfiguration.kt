@@ -43,7 +43,10 @@ constructor(
     fun filterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http.authorizeExchange {
             it.pathMatchers(HttpMethod.GET, "/**").permitAll()
-            it.pathMatchers(HttpMethod.POST, "/**").permitAll()
+            it.pathMatchers(HttpMethod.POST, "/**/**").permitAll()
+            it.pathMatchers(HttpMethod.POST, "/**/**/timeline").permitAll()
+            it.pathMatchers(HttpMethod.POST, "/create").permitAll()
+            it.pathMatchers(HttpMethod.GET, "/license").permitAll()
         }.csrf {
             it.disable()
         }.cors {

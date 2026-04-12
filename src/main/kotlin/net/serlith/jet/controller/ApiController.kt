@@ -23,7 +23,7 @@ import java.time.Duration
 import java.util.Base64
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/api/v1/flare")
 class ApiController (
     private val flareRepository: FlareProfileRepository,
     private val dataRepository: DataSampleRepository,
@@ -33,7 +33,6 @@ class ApiController (
 ) {
 
     private final val logger = LoggerFactory.getLogger(ApiController::class.java)
-    private final val health = Mono.just("{\"status\":\"ok\"}")
     private final val encoder = Base64.getEncoder()
     private final val delay = Duration.ofMillis(150)
 
@@ -41,10 +40,6 @@ class ApiController (
         .event($$"flare$terminated")
         .build()
 
-    @GetMapping("/health")
-    fun requestHealth(): Mono<String> {
-        return this.health
-    }
 
     @GetMapping("/profiler/{key}")
     fun requestProfiler(
