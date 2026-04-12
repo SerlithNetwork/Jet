@@ -11,8 +11,8 @@ import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.web.cors.CorsConfiguration
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource
-import org.springframework.web.filter.CorsFilter
+import org.springframework.web.cors.reactive.CorsConfigurationSource
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
 import org.springframework.web.server.WebFilter
 
 @Configuration
@@ -26,17 +26,17 @@ constructor(
     private final val logger = LoggerFactory.getLogger(SecurityConfiguration::class.java)
 
     @Bean
-    fun corsFilter(): CorsFilter {
+    fun corsFilter(): CorsConfigurationSource {
         val config = CorsConfiguration().apply {
             this.allowedOrigins = listOf("*")
-            this.allowedMethods = listOf("GET", "POST")
+            this.allowedMethods = listOf("GET", "POST", "OPTIONS")
             this.allowedHeaders = listOf("*")
             this.allowCredentials = false
         }
         val source = UrlBasedCorsConfigurationSource().apply {
             registerCorsConfiguration("/**", config)
         }
-        return CorsFilter(source)
+        return source
     }
 
     @Bean
@@ -46,6 +46,7 @@ constructor(
             it.pathMatchers(HttpMethod.POST, "/**").permitAll()
         }.csrf {
             it.disable()
+        }.cors {
         }.addFilterAt(this.authFilter(), SecurityWebFiltersOrder.AUTHENTICATION)
             .build()
     }
