@@ -99,7 +99,6 @@ class FlareController (
                     ).delayElements(this.delay)
             }
 
-            @Suppress("DuplicatedCode")
             return@flatMapMany this.timelineRepository.findAllByProfile(key).map { sample ->
                 ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
             }.concatWith(Flux.just(this.terminate)).delayElements(this.delay)
