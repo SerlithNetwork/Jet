@@ -42,11 +42,19 @@ constructor(
     @Bean
     fun filterChain(http: ServerHttpSecurity): SecurityWebFilterChain {
         return http.authorizeExchange {
-            it.pathMatchers(HttpMethod.GET, "/**").permitAll()
-            it.pathMatchers(HttpMethod.POST, "/**/**").permitAll()
-            it.pathMatchers(HttpMethod.POST, "/**/**/timeline").permitAll()
+
+            // Health
+            it.pathMatchers(HttpMethod.GET, "/api/v1/health").permitAll()
+
+            // Viewer
+            it.pathMatchers(HttpMethod.GET, "/api/v1/flare/**").permitAll()
+
+            // Flare client
+            it.pathMatchers(HttpMethod.POST, "/*/*").permitAll()
+            it.pathMatchers(HttpMethod.POST, "/*/*/timeline").permitAll()
             it.pathMatchers(HttpMethod.POST, "/create").permitAll()
             it.pathMatchers(HttpMethod.GET, "/license").permitAll()
+
         }.csrf {
             it.disable()
         }.cors {
