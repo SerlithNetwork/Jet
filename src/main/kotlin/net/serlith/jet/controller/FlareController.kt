@@ -24,7 +24,7 @@ import java.util.Base64
 
 @RestController
 @RequestMapping("/api/v1/flare")
-class ApiController (
+class FlareController (
     private val flareRepository: FlareProfileRepository,
     private val dataRepository: DataSampleRepository,
     private val timelineRepository: TimelineSampleRepository,
@@ -32,7 +32,7 @@ class ApiController (
     private val sessionService: SessionService,
 ) {
 
-    private final val logger = LoggerFactory.getLogger(ApiController::class.java)
+    private final val logger = LoggerFactory.getLogger(FlareController::class.java)
     private final val encoder = Base64.getEncoder()
     private final val delay = Duration.ofMillis(150)
 
