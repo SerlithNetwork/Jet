@@ -55,9 +55,11 @@ class FlareController (
 
     @GetMapping("/stream/data/{key}", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamData(
+        request: ServerHttpRequest,
         @PathVariable key: String,
     ): Flux<ServerSentEvent<String>> {
 
+        this.logger.info("Requested data stream '$key' from ${request.remoteAddress}")
         return this.flareRepository.existsFlareProfileByKey(key).filter { exists ->
             exists
         }.switchIfEmpty(
@@ -81,9 +83,11 @@ class FlareController (
 
     @GetMapping("/stream/timeline/{key}", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamTimeline(
+        request: ServerHttpRequest,
         @PathVariable key: String,
     ): Flux<ServerSentEvent<String>> {
 
+        this.logger.info("Requested timeline stream '$key' from ${request.remoteAddress}")
         return this.flareRepository.existsFlareProfileByKey(key).filter { exists ->
             exists
         }.switchIfEmpty(

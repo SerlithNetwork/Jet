@@ -30,7 +30,7 @@ class SessionService {
 
     final fun getOrCreateDataStream(key: String): Sinks.Many<ServerSentEvent<String>> {
         return this.dataStreams.computeIfAbsent(key) {
-            Sinks.many().multicast().onBackpressureBuffer()
+            Sinks.many().multicast().directBestEffort()
         }
     }
 
@@ -43,7 +43,7 @@ class SessionService {
 
     final fun getOrCreateTimelineStream(key: String): Sinks.Many<ServerSentEvent<String>> {
         return this.timelineStreams.computeIfAbsent(key) {
-            Sinks.many().multicast().onBackpressureBuffer()
+            Sinks.many().multicast().directBestEffort()
         }
     }
 
