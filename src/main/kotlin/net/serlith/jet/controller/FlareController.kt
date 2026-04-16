@@ -75,7 +75,7 @@ class FlareController (
                     ).delayElements(this.delay)
             }
 
-            return@flatMapMany this.dataRepository.findAllByProfile(key).map { sample ->
+            return@flatMapMany this.dataRepository.findAllByProfileOrderByIdAsc(key).map { sample ->
                 ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
             }.concatWith(Flux.just(this.terminate)).delayElements(this.delay)
         }
@@ -103,7 +103,7 @@ class FlareController (
                     ).delayElements(this.delay)
             }
 
-            return@flatMapMany this.timelineRepository.findAllByProfile(key).map { sample ->
+            return@flatMapMany this.timelineRepository.findAllByProfileOrderByIdAsc(key).map { sample ->
                 ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
             }.concatWith(Flux.just(this.terminate)).delayElements(this.delay)
         }

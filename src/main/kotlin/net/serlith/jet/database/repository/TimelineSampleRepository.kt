@@ -7,5 +7,5 @@ import reactor.core.publisher.Flux
 
 @Repository
 interface TimelineSampleRepository : R2dbcRepository<TimelineSample, Long> {
-    fun findAllByProfile(key: String): Flux<TimelineSample>
+    fun findAllByProfileOrderByIdAsc(key: String): Flux<TimelineSample>
 }

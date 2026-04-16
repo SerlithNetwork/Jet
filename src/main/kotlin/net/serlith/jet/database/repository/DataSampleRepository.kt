@@ -7,5 +7,5 @@ import reactor.core.publisher.Flux
 
 @Repository
 interface DataSampleRepository : R2dbcRepository<DataSample, Long> {
-    fun findAllByProfile(key: String): Flux<DataSample>
+    fun findAllByProfileOrderByIdAsc(key: String): Flux<DataSample>
 }
