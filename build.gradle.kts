@@ -4,7 +4,7 @@ plugins {
     kotlin("plugin.serialization") version "2.2.21"
     id("org.springframework.boot") version "4.0.3"
     id("io.spring.dependency-management") version "1.1.7"
-    id("com.google.protobuf") version "0.9.4"
+    id("com.google.protobuf") version "0.9.6"
 }
 
 group = "net.serlith"
@@ -36,8 +36,7 @@ dependencies {
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
-    implementation("com.google.protobuf:protobuf-javalite:3.17.3")
-    implementation("com.google.protobuf:protobuf-java-util:3.14.0")
+    implementation("com.google.protobuf:protobuf-java:4.34.0")
     implementation("io.r2dbc:r2dbc-pool")
 
     // Reactive databases
@@ -69,14 +68,8 @@ kotlin {
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:3.8.0"
+        artifact = "com.google.protobuf:protoc:4.34.0"
     }
-    generateProtoTasks {
-        all().configureEach {
-            builtins.first { it.name == "java" }.option("lite")
-        }
-    }
-    generatedFilesBaseDir = "$projectDir/src/generated"
 }
 
 tasks.withType<Test> {
