@@ -11,6 +11,8 @@ group = "net.serlith"
 version = "0.0.1-SNAPSHOT"
 description = "Jet"
 
+val nettyVersion = "4.2.10.Final"
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
@@ -38,10 +40,17 @@ dependencies {
     implementation("com.google.protobuf:protobuf-java-util:3.14.0")
     implementation("io.r2dbc:r2dbc-pool")
 
+    // Reactive databases
     runtimeOnly("com.h2database:h2")
     runtimeOnly("io.r2dbc:r2dbc-h2")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
+
+    // Netty transport natives
+    runtimeOnly("io.netty:netty-transport-native-io_uring:$nettyVersion:linux-x86_64")
+    runtimeOnly("io.netty:netty-transport-native-io_uring:$nettyVersion:linux-aarch_64")
+    runtimeOnly("io.netty:netty-transport-native-kqueue:$nettyVersion:osx-x86_64")
+    runtimeOnly("io.netty:netty-transport-native-kqueue:$nettyVersion:osx-aarch_64")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation("io.projectreactor:reactor-test")
