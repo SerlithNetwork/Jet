@@ -1,0 +1,24 @@
+spring:
+
+  r2dbc:
+    url: r2dbc:postgresql://localhost:5432/flare?sslmode=require
+    username: jet
+    password: password
+
+  http:
+    codecs:
+      max-in-memory-size: 200KB
+
+  jet:
+    cleanup:
+      days: 30
+    thumbnail:
+      worker-threads: 2
+    s3:
+      enabled: true
+      endpoint: https://s3.us-west-1.amazonaws.com
+      bucket: flare
+      max-concurrency: 5
+      key:
+        access: myawesomekey
+        secret: keepmeasecret

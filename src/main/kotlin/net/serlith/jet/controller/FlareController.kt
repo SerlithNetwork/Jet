@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import java.io.FileNotFoundException
 import java.time.Duration
 import java.util.Base64
 
@@ -120,12 +121,10 @@ class FlareController (
             return Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
         }
 
-        return Mono.fromFuture(this.thumbnailService.retrieveThumbnail(key))
-            .flatMap { thumbnail ->
-                if (thumbnail == null) {
-                    return@flatMap Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
-                }
-                return@flatMap Mono.just(thumbnail)
+        val thumbnail: Resource = this.thumbnailService.retrieveThumbnail(key)
+        return Mono.just(thumbnail)
+            .onErrorMap(FileNotFoundException::class.java) {
+                return@onErrorMap ResponseStatusException(HttpStatus.NOT_FOUND)
             }
     }
 

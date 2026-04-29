@@ -1,18 +1,25 @@
 package net.serlith.jet.service
 
 import jakarta.annotation.PostConstruct
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.FileSystemResource
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import software.amazon.awssdk.core.async.AsyncRequestBody
+import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.awt.Color
 import java.awt.Font
 import java.awt.RenderingHints
-import java.io.File
+import java.awt.image.BufferedImage
+import java.io.ByteArrayOutputStream
+import java.nio.ByteBuffer
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.Instant
 import java.time.temporal.ChronoUnit
-import java.util.Date
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -21,24 +28,33 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 
 @Service
-class ThumbnailService {
+class ThumbnailService
 
-    @Value($$"${jet.cleanup.days:30}")
+@Autowired
+constructor(
+    private val s3Client: S3AsyncClient?,
+) {
+
+    @Value($$"${jet.cleanup.days}")
     private var cleanupDays: Long = 0
 
-    @Value($$"${jet.thumbnail.worker-threads:2}")
+    @Value($$"${jet.thumbnail.worker-threads}")
     private var thumbnailWorkerThreads = 0
+
+    @Value($$"${jet.s3.bucket}")
+    private lateinit var bucket: String
 
     private final lateinit var executor: ExecutorService
 
-    private final val directory = File("pictures")
+    private final val directory = Path.of("pictures")
+    private final val prefix = "jet/thumbnails"
     private final lateinit var templateResource: ClassPathResource
     private final lateinit var fontMid: Font
     private final lateinit var fontSmall: Font
 
     @PostConstruct
     fun init() {
-        this.directory.mkdirs()
+        Files.createDirectories(this.directory)
         this.templateResource = ClassPathResource("thumbnail.png")
         ClassPathResource("JetBrainsMono-Regular.ttf").inputStream.use { inputStream ->
             val font = Font.createFont(Font.TRUETYPE_FONT, inputStream)
@@ -124,32 +140,55 @@ class ThumbnailService {
 
         g2d.dispose()
 
-        ImageIO.write(template, "PNG", File(directory, "$key.png"))
+        if (this.s3Client != null) {
+            this.uploadToS3(key, template)
+            return
+        }
+
+        ImageIO.write(template, "PNG", this.directory.resolve("$key.png").toFile())
     }
 
-    final fun retrieveThumbnail(key: String): CompletableFuture<out FileSystemResource?> {
-        return CompletableFuture.supplyAsync({
-            return@supplyAsync this.retrieveThumbnail0(key)
-        }, this.executor)
+    private final fun uploadToS3(key: String, buffer: BufferedImage) {
+        if (this.s3Client == null) {
+            throw IllegalStateException("S3 client cannot be null!")
+        }
+
+        val output = ByteArrayOutputStream()
+        ImageIO.write(buffer, "PNG", output)
+
+        val array = output.toByteArray()
+        this.s3Client.putObject(
+            PutObjectRequest.builder()
+                .bucket(this.bucket)
+                .key("${this.prefix}/$key.png")
+                .contentLength(array.size.toLong())
+                .contentType("image/png")
+                .metadata(emptyMap())
+                .build(),
+            AsyncRequestBody.fromByteBuffer(ByteBuffer.wrap(array))
+        )
     }
 
     // Maybe some cache will be a good idea in the future, but for now this is ok
-    private final fun retrieveThumbnail0(key: String): FileSystemResource? {
-        val thumbnail = File(directory, "$key.png")
-        if (!thumbnail.exists()) {
-            return null
-        }
-        return FileSystemResource(thumbnail)
+    final fun retrieveThumbnail(key: String): FileSystemResource {
+        return FileSystemResource(this.directory.resolve("$key.png"))
     }
 
 
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
     fun cleanupThumbnails() {
 
-        val date = Date.from(Instant.now().minus(this.cleanupDays, ChronoUnit.DAYS))
-        this.directory.listFiles().forEach { file ->
-            if (file.lastModified() < date.time) {
-                file.delete()
+        if (!Files.exists(this.directory)) {
+            return
+        }
+
+        val instant = Instant.now().minus(this.cleanupDays, ChronoUnit.DAYS)
+        Files.list(this.directory).use { files ->
+            for (file in files.toList()) {
+                if (Files.getLastModifiedTime(file).toInstant().isAfter(instant)) {
+                    continue
+                }
+                Files.deleteIfExists(file)
             }
         }
 
