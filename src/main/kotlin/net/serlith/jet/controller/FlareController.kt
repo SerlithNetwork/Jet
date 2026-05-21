@@ -1,5 +1,6 @@
 package net.serlith.jet.controller
 
+import jakarta.validation.constraints.Pattern
 import net.serlith.jet.database.repository.DataSampleRepository
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.repository.TimelineSampleRepository
@@ -45,7 +46,13 @@ class FlareController (
     @GetMapping("/profiler/{key}")
     fun requestProfiler(
         request: ServerHttpRequest,
-        @PathVariable key: String,
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
     ): Mono<String> {
 
         this.logger.info("Requested profile '$key' from ${request.remoteAddress}")
@@ -57,7 +64,13 @@ class FlareController (
     @GetMapping("/stream/data/{key}", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamData(
         request: ServerHttpRequest,
-        @PathVariable key: String,
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
     ): Flux<ServerSentEvent<String>> {
 
         this.logger.info("Requested data stream '$key' from ${request.remoteAddress}")
@@ -85,7 +98,13 @@ class FlareController (
     @GetMapping("/stream/timeline/{key}", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamTimeline(
         request: ServerHttpRequest,
-        @PathVariable key: String,
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
     ): Flux<ServerSentEvent<String>> {
 
         this.logger.info("Requested timeline stream '$key' from ${request.remoteAddress}")
@@ -113,7 +132,13 @@ class FlareController (
     @GetMapping("/thumbnail/{key}.png", produces = [MediaType.IMAGE_PNG_VALUE])
     fun requestThumbnail(
         request: ServerHttpRequest,
-        @PathVariable key: String,
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
     ): Mono<Resource> {
 
         if (!key.isAlphanumeric()) {

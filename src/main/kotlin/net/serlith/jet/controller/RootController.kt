@@ -1,6 +1,7 @@
 package net.serlith.jet.controller
 
 import co.technove.flare.proto.ProfilerFileProto
+import jakarta.validation.constraints.Pattern
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.types.FlareProfile
 import net.serlith.jet.service.ProfileService
@@ -191,8 +192,20 @@ class RootController (
     @PostMapping("/{id}/{key}")
     fun postData(
         request: ServerHttpRequest,
-        @PathVariable("id") key: String,
-        @PathVariable("key") hash: String,
+
+        @PathVariable("id")
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
+        @PathVariable("key")
+        @Pattern(
+            regexp = "[a-fA-F0-9_]+$",
+            message = "Invalid hash format"
+        )
+        hash: String,
+
         @RequestBody data: ByteArray,
     ) : Mono<String> {
 
@@ -223,8 +236,21 @@ class RootController (
     @PostMapping("/{id}/{key}/timeline")
     fun postTimeline(
         request: ServerHttpRequest,
-        @PathVariable("id") key: String,
-        @PathVariable("key") hash: String,
+
+        @PathVariable("id")
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
+
+        @PathVariable("key")
+        @Pattern(
+            regexp = "[a-fA-F0-9_]+$",
+            message = "Invalid hash format"
+        )
+        hash: String,
+
         @RequestBody data: ByteArray,
     ) : Mono<String> {
 
