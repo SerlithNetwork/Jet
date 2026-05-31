@@ -1,20 +1,32 @@
 package net.serlith.jet.service
 
 import jakarta.annotation.PostConstruct
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.FileSystemResource
+import org.springframework.core.io.buffer.DataBuffer
+import org.springframework.core.io.buffer.DataBufferUtils
+import org.springframework.core.io.buffer.DefaultDataBufferFactory
+import org.springframework.http.HttpStatus
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import org.springframework.util.unit.DataSize
+import org.springframework.web.server.ResponseStatusException
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import software.amazon.awssdk.core.async.AsyncRequestBody
+import software.amazon.awssdk.core.async.AsyncResponseTransformer
 import software.amazon.awssdk.services.s3.S3AsyncClient
+import software.amazon.awssdk.services.s3.model.GetObjectRequest
 import software.amazon.awssdk.services.s3.model.PutObjectRequest
 import java.awt.Color
 import java.awt.Font
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.io.FileNotFoundException
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
@@ -44,10 +56,15 @@ constructor(
     @Value($$"${jet.s3.bucket}")
     private lateinit var bucket: String
 
-    private final lateinit var executor: ExecutorService
+    private final val logger = LoggerFactory.getLogger(ThumbnailService::class.java)
+
 
     private final val directory = Path.of("pictures")
     private final val prefix = "jet/thumbnails"
+    private final val bufferSize = DataSize.ofKilobytes(4).toBytes().toInt()
+
+
+    private final lateinit var executor: ExecutorService
     private final lateinit var templateResource: ClassPathResource
     private final lateinit var fontMid: Font
     private final lateinit var fontSmall: Font
@@ -170,8 +187,46 @@ constructor(
     }
 
     // Maybe some cache will be a good idea in the future, but for now this is ok
-    final fun retrieveThumbnail(key: String): FileSystemResource {
-        return FileSystemResource(this.directory.resolve("$key.png"))
+    final fun retrieveThumbnail(key: String): Flux<DataBuffer> {
+        if (this.s3Client != null) {
+            return this.downloadFromS3(key)
+        }
+
+        val resource = FileSystemResource(this.directory.resolve("$key.png"))
+        return DataBufferUtils.read(resource, DefaultDataBufferFactory(), this.bufferSize)
+            .onErrorMap(FileNotFoundException::class.java) {
+                return@onErrorMap ResponseStatusException(HttpStatus.NOT_FOUND)
+            }
+    }
+
+    private final fun downloadFromS3(key: String): Flux<DataBuffer> {
+        if (this.s3Client == null) {
+            throw IllegalStateException("S3 client cannot be null!")
+        }
+
+        val future = this.s3Client.getObject(
+            GetObjectRequest.builder()
+                .bucket(this.bucket)
+                .key("${this.prefix}/$key.png")
+                .build(),
+            AsyncResponseTransformer.toPublisher()
+        )
+
+        val bufferFactory = DefaultDataBufferFactory()
+        return Mono.fromFuture(future)
+            .flatMapMany { response ->
+                val objectResponse = response.response()
+                val sdkResponse = objectResponse.sdkHttpResponse() ?: return@flatMapMany Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
+
+                if (!sdkResponse.isSuccessful) {
+                    this.logger.info("Failed to download thumbnail for [$key]: ${sdkResponse.statusText().orElse("<empty>")}")
+                    return@flatMapMany Mono.error(ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR))
+                }
+
+                return@flatMapMany Flux.from(response)
+            }.map { byteBuffer ->
+                return@map bufferFactory.wrap(byteBuffer)
+            }
     }
 
 

@@ -8,7 +8,7 @@ import net.serlith.jet.service.SessionService
 import net.serlith.jet.service.ThumbnailService
 import net.serlith.jet.util.isAlphanumeric
 import org.slf4j.LoggerFactory
-import org.springframework.core.io.Resource
+import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.codec.ServerSentEvent
@@ -20,7 +20,6 @@ import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
-import java.io.FileNotFoundException
 import java.time.Duration
 import java.util.Base64
 
@@ -139,18 +138,14 @@ class FlareController (
             message = "Invalid key format"
         )
         key: String,
-    ): Mono<Resource> {
+    ): Flux<DataBuffer> {
 
         if (!key.isAlphanumeric()) {
             this.logger.info("Requested profile with bad key '$key' from ${request.remoteAddress}")
-            return Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
+            return Flux.error(ResponseStatusException(HttpStatus.NOT_FOUND))
         }
 
-        val thumbnail: Resource = this.thumbnailService.retrieveThumbnail(key)
-        return Mono.just(thumbnail)
-            .onErrorMap(FileNotFoundException::class.java) {
-                return@onErrorMap ResponseStatusException(HttpStatus.NOT_FOUND)
-            }
+        return this.thumbnailService.retrieveThumbnail(key)
     }
 
 }

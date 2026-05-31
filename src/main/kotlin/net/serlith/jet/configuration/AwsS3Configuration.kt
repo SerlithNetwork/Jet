@@ -1,7 +1,5 @@
 package net.serlith.jet.configuration
 
-import jakarta.annotation.PostConstruct
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
@@ -9,6 +7,7 @@ import org.springframework.context.annotation.Configuration
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient
+import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.S3AsyncClient
 import software.amazon.awssdk.services.s3.S3Configuration
 import java.net.URI
@@ -18,16 +17,11 @@ import java.time.Duration
 @ConditionalOnProperty(name = ["jet.s3.enabled"], havingValue = "true", matchIfMissing = false)
 class AwsS3Configuration {
 
-    private final val logger = LoggerFactory.getLogger(AwsS3Configuration::class.java)
-
     @Value($$"${jet.s3.enabled}") // Just to not get warnings on application.yml
     private var enabled: Boolean = false
 
     @Value($$"${jet.s3.endpoint}")
     private lateinit var endpoint: String
-
-    @Value($$"${jet.s3.bucket}")
-    private lateinit var bucket: String
 
     @Value($$"${jet.s3.key.access}")
     private lateinit var accessKey: String
@@ -55,6 +49,7 @@ class AwsS3Configuration {
             .httpClient(client)
             .endpointOverride(URI.create(this.endpoint))
             .credentialsProvider(credentials)
+            .region(Region.US_EAST_1)
             .serviceConfiguration(config)
             .build()
     }
