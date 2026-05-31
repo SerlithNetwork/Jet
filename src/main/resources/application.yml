@@ -1,0 +1,51 @@
+spring:
+
+  application:
+    name: Jet
+    version: 1.0
+
+  r2dbc:
+    pool:
+      enabled: true
+    url: ${JET_DATABASE_URL:r2dbc:h2:file:///./jetdb?options=MODE=PostgreSQL;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;LOCK_MODE=3}
+    username: ${JET_DATABASE_USER:jet}
+    password: ${JET_DATABASE_PASSWORD:}
+
+  http:
+    codecs:
+      max-in-memory-size: ${JET_MAX_REQUEST_SIZE:200KB}
+
+  webflux:
+    multipart:
+      headers-charset: UTF-8
+
+  output:
+    ansi:
+      enabled: always
+
+server:
+  port: 9420
+
+logging:
+  file:
+    name: logs/latest.log
+  logback:
+    rollingpolicy:
+      max-history: 20
+      file-name-pattern: ${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz
+
+jet:
+  cleanup:
+    days: ${JET_CLEANUP_DAYS:30}
+  thumbnail:
+    worker-threads: ${JET_THUMBNAIL_WORKER_THREADS:2}
+  s3:
+    enabled: ${JET_STORAGE_S3_ENABLED:false}
+    endpoint: ${JET_STORAGE_S3_ENDPOINT:https://s3.us-west-1.amazonaws.com}
+    bucket: ${JET_STORAGE_S3_BUCKET:}
+    max-concurrency: ${JET_STORAGE_S3_MAX_CONCURRENCY:5}
+    key:
+      access: ${JET_STORAGE_S3_KEY_ACCESS:}
+      secret: ${JET_STORAGE_S3_KEY_SECREY:}
+
+

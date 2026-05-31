@@ -36,6 +36,8 @@ dependencies {
     implementation("io.projectreactor.kotlin:reactor-kotlin-extensions")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
+    implementation("software.amazon.awssdk:s3:2.42.41")
+    implementation("software.amazon.awssdk:netty-nio-client:2.42.41")
     implementation("com.google.protobuf:protobuf-java:4.34.0")
     implementation("io.r2dbc:r2dbc-pool")
 

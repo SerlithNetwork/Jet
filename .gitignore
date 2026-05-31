@@ -47,8 +47,10 @@ out/
 **.log
 src/generated/
 application.properties
+application.yml
 /jetdb.mv.db
 /jetdb.trace.db
 /application.properties
+/application.yml
 /pictures
 /config

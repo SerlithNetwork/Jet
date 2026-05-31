@@ -1,5 +1,6 @@
 package net.serlith.jet.controller
 
+import jakarta.validation.constraints.Pattern
 import net.serlith.jet.database.repository.DataSampleRepository
 import net.serlith.jet.database.repository.FlareProfileRepository
 import net.serlith.jet.database.repository.TimelineSampleRepository
@@ -7,7 +8,7 @@ import net.serlith.jet.service.SessionService
 import net.serlith.jet.service.ThumbnailService
 import net.serlith.jet.util.isAlphanumeric
 import org.slf4j.LoggerFactory
-import org.springframework.core.io.Resource
+import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.codec.ServerSentEvent
@@ -44,7 +45,13 @@ class FlareController (
     @GetMapping("/profiler/{key}")
     fun requestProfiler(
         request: ServerHttpRequest,
-        @PathVariable key: String,
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
     ): Mono<String> {
 
         this.logger.info("Requested profile '$key' from ${request.remoteAddress}")
@@ -56,7 +63,13 @@ class FlareController (
     @GetMapping("/stream/data/{key}", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamData(
         request: ServerHttpRequest,
-        @PathVariable key: String,
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
     ): Flux<ServerSentEvent<String>> {
 
         this.logger.info("Requested data stream '$key' from ${request.remoteAddress}")
@@ -84,7 +97,13 @@ class FlareController (
     @GetMapping("/stream/timeline/{key}", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
     fun streamTimeline(
         request: ServerHttpRequest,
-        @PathVariable key: String,
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
     ): Flux<ServerSentEvent<String>> {
 
         this.logger.info("Requested timeline stream '$key' from ${request.remoteAddress}")
@@ -112,21 +131,21 @@ class FlareController (
     @GetMapping("/thumbnail/{key}.png", produces = [MediaType.IMAGE_PNG_VALUE])
     fun requestThumbnail(
         request: ServerHttpRequest,
-        @PathVariable key: String,
-    ): Mono<Resource> {
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
+    ): Flux<DataBuffer> {
 
         if (!key.isAlphanumeric()) {
             this.logger.info("Requested profile with bad key '$key' from ${request.remoteAddress}")
-            return Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
+            return Flux.error(ResponseStatusException(HttpStatus.NOT_FOUND))
         }
 
-        return Mono.fromFuture(this.thumbnailService.retrieveThumbnail(key))
-            .flatMap { thumbnail ->
-                if (thumbnail == null) {
-                    return@flatMap Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
-                }
-                return@flatMap Mono.just(thumbnail)
-            }
+        return this.thumbnailService.retrieveThumbnail(key)
     }
 
 }
