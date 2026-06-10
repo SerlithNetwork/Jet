@@ -39,6 +39,7 @@ dependencies {
     implementation("software.amazon.awssdk:s3:2.42.41")
     implementation("software.amazon.awssdk:netty-nio-client:2.42.41")
     implementation("com.google.protobuf:protobuf-java:4.34.0")
+    implementation("io.jsonwebtoken:jjwt-api:0.13.0")
     implementation("io.r2dbc:r2dbc-pool")
 
     // Reactive databases
@@ -46,6 +47,10 @@ dependencies {
     runtimeOnly("io.r2dbc:r2dbc-h2")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
+
+    runtimeOnly("org.bouncycastle:bcprov-jdk18on:1.84")
+    runtimeOnly("io.jsonwebtoken:jjwt-impl:0.13.0")
+    runtimeOnly("io.jsonwebtoken:jjwt-jackson:0.13.0")
 
     // Netty transport natives
     runtimeOnly("io.netty:netty-transport-native-io_uring:$nettyVersion:linux-x86_64")
