@@ -206,7 +206,8 @@ class RootController (
         )
         hash: String,
 
-        @RequestBody data: ByteArray,
+        @RequestBody
+        data: ByteArray, // Required to limit sample sizes, R2DBC tables also expect the full array
     ) : Mono<String> {
 
         // Users cannot submit data to other user's session
@@ -251,7 +252,8 @@ class RootController (
         )
         hash: String,
 
-        @RequestBody data: ByteArray,
+        @RequestBody
+        data: ByteArray, // Required to limit sample sizes, R2DBC tables also expect the full array
     ) : Mono<String> {
 
         // Users cannot submit data to other user's session
