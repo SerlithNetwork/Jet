@@ -35,7 +35,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-h2console")
 
     jooqCodegen("org.jooq:jooq-codegen:$jooqVersion")
-    jooqCodegen("com.h2database:h2")
+    jooqCodegen("org.postgresql:postgresql")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
@@ -81,14 +81,15 @@ val script = projectDir.resolve("src/main/resources/schema.sql")
 jooq {
     configuration {
         jdbc {
-            driver = "org.h2.Driver"
-            url = "jdbc:h2:mem:jooq_codegen;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DATABASE_TO_UPPER=false;INIT=RUNSCRIPT FROM '${script.absolutePath.replace("\\", "\\\\")}'"
-            user = ""
-            password = ""
+            driver = "org.postgresql.Driver"
+            url = property("jet.jooq.database.url") as String
+            user = property("jet.jooq.database.user") as String
+            password = property("jet.jooq.database.password") as String
         }
         generator {
             database {
-                name = "org.jooq.meta.h2.H2Database"
+                name = "org.jooq.meta.postgres.PostgresDatabase"
+                inputSchema = "public"
             }
             generate {
                 isRecords = true
