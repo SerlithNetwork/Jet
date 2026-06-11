@@ -22,8 +22,8 @@ class JwtService {
         .random(this.random)
         .build()
 
-    private val accessLifetime = Duration.ofHours(1)
-    private val refreshLifetime = Duration.ofHours(12)
+    val accessLifetime: Duration = Duration.ofHours(1)
+    val refreshLifetime: Duration = Duration.ofHours(12)
 
     fun areClaimsValid(claims: Claims, user: UserDetails): Boolean {
         val username = claims.subject

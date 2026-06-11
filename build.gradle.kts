@@ -5,6 +5,7 @@ plugins {
     id("org.springframework.boot") version "4.0.3"
     id("io.spring.dependency-management") version "1.1.7"
     id("com.google.protobuf") version "0.9.6"
+    id("org.jooq.jooq-codegen-gradle") version "3.19.32"
 }
 
 group = "net.serlith"
@@ -12,6 +13,7 @@ version = "0.0.1-SNAPSHOT"
 description = "Jet"
 
 val nettyVersion = "4.2.10.Final"
+val jooqVersion = "3.19.32"
 
 java {
     toolchain {
@@ -26,10 +28,14 @@ repositories {
 dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-r2dbc")
     implementation("org.springframework.boot:spring-boot-starter-r2dbc")
+    implementation("org.springframework.boot:spring-boot-starter-jooq")
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-h2console")
+
+    jooqCodegen("org.jooq:jooq-codegen:$jooqVersion")
+    jooqCodegen("com.h2database:h2")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-yaml")
@@ -57,14 +63,6 @@ dependencies {
     runtimeOnly("io.netty:netty-transport-native-io_uring:$nettyVersion:linux-aarch_64")
     runtimeOnly("io.netty:netty-transport-native-kqueue:$nettyVersion:osx-x86_64")
     runtimeOnly("io.netty:netty-transport-native-kqueue:$nettyVersion:osx-aarch_64")
-
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testImplementation("io.projectreactor:reactor-test")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test")
-    testImplementation("org.springframework.security:spring-security-test")
-
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 kotlin {
@@ -79,6 +77,32 @@ protobuf {
     }
 }
 
-tasks.withType<Test> {
-    useJUnitPlatform()
+val script = projectDir.resolve("src/main/resources/schema.sql")
+jooq {
+    configuration {
+        jdbc {
+            driver = "org.h2.Driver"
+            url = "jdbc:h2:mem:jooq_codegen;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DATABASE_TO_UPPER=false;INIT=RUNSCRIPT FROM '${script.absolutePath.replace("\\", "\\\\")}'"
+            user = ""
+            password = ""
+        }
+        generator {
+            database {
+                name = "org.jooq.meta.h2.H2Database"
+            }
+            generate {
+                isRecords = true
+            }
+            target {
+                packageName = "net.serlith.jet.schema"
+                directory = "build/generated-src/jooq/main"
+            }
+        }
+    }
+}
+
+sourceSets {
+    main {
+        java.srcDir("build/generated-src/jooq/main")
+    }
 }
