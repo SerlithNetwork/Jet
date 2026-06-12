@@ -32,7 +32,7 @@ class DatabaseConfiguration {
         initializer.setConnectionFactory(connectionFactory)
 
         val populator = CompositeDatabasePopulator()
-        populator.addPopulators(ResourceDatabasePopulator(ClassPathResource("schema.sql")))
+        populator.addPopulators(ResourceDatabasePopulator(ClassPathResource("db/migration/V1__init_schema.sql")))
         initializer.setDatabasePopulator(populator)
 
         return initializer

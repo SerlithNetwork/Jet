@@ -6,6 +6,7 @@ plugins {
     id("io.spring.dependency-management") version "1.1.7"
     id("com.google.protobuf") version "0.9.6"
     id("org.jooq.jooq-codegen-gradle") version "3.19.32"
+    id("org.flywaydb.flyway") version "12.8.1"
 }
 
 group = "net.serlith"
@@ -35,6 +36,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-h2console")
 
     jooqCodegen("org.jooq:jooq-codegen:$jooqVersion")
+    jooqCodegen("org.jooq:jooq-meta-extensions:$jooqVersion")
     jooqCodegen("org.postgresql:postgresql")
 
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -65,6 +67,16 @@ dependencies {
     runtimeOnly("io.netty:netty-transport-native-kqueue:$nettyVersion:osx-aarch_64")
 }
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        classpath("org.flywaydb:flyway-database-postgresql:12.8.1")
+    }
+}
+
 kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict")
@@ -77,7 +89,20 @@ protobuf {
     }
 }
 
-val script = projectDir.resolve("src/main/resources/schema.sql")
+val script = projectDir.resolve("src/main/resources/db/migration/V1__init_schema.sql")
+
+flyway {
+    url = property("jet.jooq.database.url") as String
+    user = property("jet.jooq.database.user") as String
+    password = property("jet.jooq.database.password") as String
+    locations = arrayOf("filesystem:${script.parent}")
+    driver = "org.postgresql.Driver"
+
+    dependencies {
+        runtimeOnly("org.postgresql:postgresql")
+    }
+}
+
 jooq {
     configuration {
         jdbc {
