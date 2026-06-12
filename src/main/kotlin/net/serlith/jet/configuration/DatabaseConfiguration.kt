@@ -3,7 +3,6 @@ package net.serlith.jet.configuration
 import io.r2dbc.spi.ConnectionFactory
 import org.jooq.DSLContext
 import org.jooq.SQLDialect
-import org.jooq.conf.Settings
 import org.jooq.impl.DSL
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -14,7 +13,6 @@ import org.springframework.r2dbc.connection.TransactionAwareConnectionFactoryPro
 import org.springframework.r2dbc.connection.init.CompositeDatabasePopulator
 import org.springframework.r2dbc.connection.init.ConnectionFactoryInitializer
 import org.springframework.r2dbc.connection.init.ResourceDatabasePopulator
-import java.util.*
 
 
 @Configuration
@@ -40,23 +38,9 @@ class DatabaseConfiguration {
 
     @Bean
     fun dslContext(factory: ConnectionFactory): DSLContext {
-        val dialect: SQLDialect?
-        val lower = url.lowercase(Locale.ROOT)
-        if (lower.contains("r2dbc:h2")) {
-            this.logger.info("Using H2 Dialect")
-            dialect = SQLDialect.H2
-        } else if (lower.contains("r2dbc:postgres")) {
-            this.logger.info("Using POSTGRESQL Dialect")
-            dialect = SQLDialect.POSTGRES
-        } else {
-            throw RuntimeException("Only H2 and Postgres are supported")
-        }
-
         return DSL.using(
             TransactionAwareConnectionFactoryProxy(factory),
-            dialect,
-            Settings()
-                .withRenderSchema(false)
+            SQLDialect.POSTGRES
         )
     }
 

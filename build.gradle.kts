@@ -33,7 +33,6 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-security")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-webflux")
-    implementation("org.springframework.boot:spring-boot-h2console")
 
     jooqCodegen("org.jooq:jooq-codegen:$jooqVersion")
     jooqCodegen("org.jooq:jooq-meta-extensions:$jooqVersion")
@@ -51,8 +50,6 @@ dependencies {
     implementation("io.r2dbc:r2dbc-pool")
 
     // Reactive databases
-    runtimeOnly("com.h2database:h2")
-    runtimeOnly("io.r2dbc:r2dbc-h2")
     runtimeOnly("org.postgresql:postgresql")
     runtimeOnly("org.postgresql:r2dbc-postgresql")
 

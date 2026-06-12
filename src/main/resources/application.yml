@@ -7,7 +7,7 @@ spring:
   r2dbc:
     pool:
       enabled: true
-    url: ${JET_DATABASE_URL:r2dbc:h2:file:///./jetdb?options=MODE=PostgreSQL;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;LOCK_MODE=3}
+    url: ${JET_DATABASE_URL:r2dbc:postgresql://localhost:5432/flare?ssl=require}
     username: ${JET_DATABASE_USER:jet}
     password: ${JET_DATABASE_PASSWORD:}
 
