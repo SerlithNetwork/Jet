@@ -1,7 +1,7 @@
 package net.serlith.jet.types.management
 
 data class AuthenticationDetails (
-    val user: ManagerDetails,
+    val user: FlareManagerDetails,
     val access: Entry,
     val refresh: Entry,
 ) {

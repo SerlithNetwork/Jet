@@ -5,7 +5,7 @@ import net.serlith.jet.manager.PasswordAuthenticationManager
 import net.serlith.jet.service.JwtService
 import net.serlith.jet.types.management.AuthenticationDetails
 import net.serlith.jet.types.management.AuthenticationForm
-import net.serlith.jet.types.management.ManagerDetails
+import net.serlith.jet.types.management.FlareManagerDetails
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.server.reactive.ServerHttpRequest
@@ -50,7 +50,7 @@ class AuthenticationController (
                     val accessToken = this.jwts.createAccessToken(user!!)
                     val refreshToken = this.jwts.createRefreshToken(user)
                     AuthenticationDetails(
-                        user = ManagerDetails.View(user.username),
+                        user = FlareManagerDetails.View(user.username),
                         access = AuthenticationDetails.Entry(accessToken, this.jwts.accessLifetime.seconds),
                         refresh = AuthenticationDetails.Entry(refreshToken, this.jwts.refreshLifetime.seconds)
                     )
@@ -107,7 +107,7 @@ class AuthenticationController (
                 val refreshToken = this.jwts.createRefreshToken(user)
                 Mono.just(
                     AuthenticationDetails(
-                        user = ManagerDetails.View(user.username),
+                        user = FlareManagerDetails.View(user.username),
                         access = AuthenticationDetails.Entry(accessToken, this.jwts.accessLifetime.seconds),
                         refresh = AuthenticationDetails.Entry(refreshToken, this.jwts.refreshLifetime.seconds)
                     )

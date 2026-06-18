@@ -1,7 +1,7 @@
 package net.serlith.jet.controller
 
 import net.serlith.jet.service.TokensService
-import net.serlith.jet.types.management.ManagerDetails
+import net.serlith.jet.types.management.FlareManagerDetails
 import net.serlith.jet.types.user.FlareUserDetails
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.annotation.AuthenticationPrincipal
@@ -29,8 +29,8 @@ class ManagementController (
     fun getManagerSelf(
         @AuthenticationPrincipal
         user: UserDetails,
-    ): Mono<ManagerDetails.View> {
-        return Mono.just(ManagerDetails.View(user.username))
+    ): Mono<FlareManagerDetails.View> {
+        return Mono.just(FlareManagerDetails.View(user.username))
     }
 
     @GetMapping("/user")
