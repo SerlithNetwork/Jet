@@ -8,6 +8,7 @@ import org.jooq.DSLContext
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
@@ -75,6 +76,16 @@ class ProfilingService (
         this.dsl.deleteFrom(Tables.FLARE_PROFILE)
             .where(Tables.FLARE_PROFILE.CREATED_AT.eq(cleanup))
         return Mono.empty()
+    }
+
+    fun fetchAllKeys(
+    ): Mono<List<String>> {
+        return Flux.from(
+            this.dsl.select(Tables.FLARE_PROFILE.PROFILE_KEY)
+                .from(Tables.FLARE_PROFILE)
+        ).map { record ->
+            return@map record.value1()
+        }.collectList()
     }
 
 }
