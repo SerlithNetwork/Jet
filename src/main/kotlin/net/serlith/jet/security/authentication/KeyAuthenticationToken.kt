@@ -1,4 +1,4 @@
-package net.serlith.jet.server.security.authentication
+package net.serlith.jet.security.authentication
 
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.core.GrantedAuthority

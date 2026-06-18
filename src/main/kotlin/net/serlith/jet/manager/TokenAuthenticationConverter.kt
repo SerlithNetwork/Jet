@@ -9,21 +9,17 @@ import org.springframework.web.server.ServerWebExchange
 import reactor.core.publisher.Mono
 
 @Component
-class JwtAuthenticationConverter : ServerAuthenticationConverter {
+class TokenAuthenticationConverter : ServerAuthenticationConverter {
 
-    private val bearerPrefix = "Bearer "
+    final val bearer = "token"
 
     override fun convert(exchange: ServerWebExchange): Mono<Authentication> {
         val header = exchange.request.headers.getFirst(HttpHeaders.AUTHORIZATION)
-        if (header.isNullOrBlank() || !header.startsWith(bearerPrefix)) {
+        if (header.isNullOrBlank()) {
             return Mono.empty()
         }
 
-        val token = header.removePrefix(bearerPrefix)
-        if (token.isBlank()) {
-            return Mono.empty()
-        }
-
+        val token = header.removePrefix(bearer).trim()
         return Mono.just(KeyAuthenticationToken(token))
     }
 

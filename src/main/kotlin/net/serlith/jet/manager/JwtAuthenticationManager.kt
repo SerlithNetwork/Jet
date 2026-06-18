@@ -1,6 +1,6 @@
 package net.serlith.jet.manager
 
-import net.serlith.jet.server.security.authentication.KeyAuthenticationToken
+import net.serlith.jet.security.authentication.KeyAuthenticationToken
 import net.serlith.jet.service.JwtService
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.ReactiveAuthenticationManager

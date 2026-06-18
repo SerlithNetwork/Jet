@@ -1,6 +1,6 @@
 package net.serlith.jet.service
 
-import net.serlith.jet.schema.public_.Tables
+import net.serlith.jet.schema.Tables
 import org.jooq.DSLContext
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.security.core.userdetails.User

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Mono
@@ -30,6 +31,7 @@ import java.util.zip.GZIPOutputStream
 import kotlin.math.min
 
 @RestController
+@RequestMapping("/api/v1/profiling")
 class RootController (
     private val tokenService: TokenService,
     private val flareRepository: FlareProfileRepository,
@@ -54,7 +56,9 @@ class RootController (
     @PostMapping("/create")
     fun postCreate(
         request: ServerHttpRequest,
-        @RequestBody data: ByteArray,
+
+        @RequestBody
+        data: ByteArray, // I don't like this, but I need the entire ByteArray
     ): Mono<CreateProfileResponse> {
 
         val token = request.headers.getFirst("Authorization")!!.removePrefix("token ")
