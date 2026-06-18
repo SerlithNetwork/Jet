@@ -1,5 +1,6 @@
 package net.serlith.jet.controller
 
+import jakarta.validation.Valid
 import net.serlith.jet.service.TokensService
 import net.serlith.jet.types.management.FlareManagerDetails
 import net.serlith.jet.types.user.FlareUserDetails
@@ -44,6 +45,7 @@ class ManagementController (
 
     @PostMapping("/user")
     fun createFlareUser(
+        @Valid
         @RequestBody
         request: FlareUserDetails.Request,
 
@@ -59,6 +61,7 @@ class ManagementController (
         @PathVariable
         id: Long,
 
+        @Valid
         @RequestBody
         request: FlareUserDetails.Update,
 
