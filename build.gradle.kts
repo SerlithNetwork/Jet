@@ -94,6 +94,7 @@ flyway {
     password = property("jet.jooq.database.password") as String
     locations = arrayOf("filesystem:${script.parent}")
     driver = "org.postgresql.Driver"
+    cleanDisabled = false
 
     dependencies {
         runtimeOnly("org.postgresql:postgresql")
@@ -131,11 +132,14 @@ sourceSets {
 }
 
 tasks {
-    build {
+    compileKotlin {
         dependsOn(generateProto)
         dependsOn(jooqCodegen)
     }
     jooqCodegen {
+        dependsOn(flywayMigrate)
+    }
+    flywayMigrate {
         dependsOn(flywayClean)
     }
 }
