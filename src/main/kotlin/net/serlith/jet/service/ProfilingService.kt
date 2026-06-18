@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.time.LocalDateTime
+import java.util.Base64
 import java.util.concurrent.TimeUnit
 
 @Service
@@ -20,6 +21,8 @@ class ProfilingService (
 
     @Value($$"${jet.cleanup.days:30}")
     private var cleanupDays: Long = 0
+
+    private final val encoder = Base64.getEncoder()
 
     fun createProfiler(
         user: FlareUserDetails.View,
@@ -70,14 +73,6 @@ class ProfilingService (
         ).map(Int::isOne)
     }
 
-    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
-    fun purgeOldProfilers(): Mono<Void> {
-        val cleanup = LocalDateTime.now().minusDays(this.cleanupDays)
-        this.dsl.deleteFrom(Tables.FLARE_PROFILE)
-            .where(Tables.FLARE_PROFILE.CREATED_AT.eq(cleanup))
-        return Mono.empty()
-    }
-
     fun fetchAllKeys(
     ): Mono<List<String>> {
         return Flux.from(
@@ -86,6 +81,55 @@ class ProfilingService (
         ).map { record ->
             return@map record.value1()
         }.collectList()
+    }
+
+    fun fetchProfilerByKeyEncoded(
+        key: String,
+    ): Mono<String> {
+        return Mono.from(
+            this.dsl.selectFrom(Tables.FLARE_PROFILE)
+                .where(Tables.FLARE_PROFILE.PROFILE_KEY.eq(key))
+        ).map { record ->
+            return@map this.encoder.encodeToString(record.raw)
+        }
+    }
+
+    fun fetchAllSampleDataByKeyEncoded(
+        key: String,
+    ): Flux<String> {
+        return Flux.from(
+            this.dsl.selectFrom(Tables.FLARE_SAMPLE_DATA)
+                .where(Tables.FLARE_SAMPLE_DATA.PROFILE_KEY.eq(key))
+                .orderBy(Tables.FLARE_SAMPLE_DATA.CREATED_AT.asc())
+        ).map { record ->
+            return@map this.encoder.encodeToString(record.raw)
+        }
+    }
+
+    fun fetchAllSampleTimelineByKeyEncoded(
+        key: String,
+    ): Flux<String> {
+        return Flux.from(
+            this.dsl.selectFrom(Tables.FLARE_SAMPLE_TIMELINE)
+                .where(Tables.FLARE_SAMPLE_TIMELINE.PROFILE_KEY.eq(key))
+                .orderBy(Tables.FLARE_SAMPLE_TIMELINE.CREATED_AT.asc())
+        ).map { record ->
+            return@map this.encoder.encodeToString(record.raw)
+        }
+    }
+
+
+
+
+
+
+
+    @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
+    fun purgeOldProfilers(): Mono<Void> {
+        val cleanup = LocalDateTime.now().minusDays(this.cleanupDays)
+        this.dsl.deleteFrom(Tables.FLARE_PROFILE)
+            .where(Tables.FLARE_PROFILE.CREATED_AT.eq(cleanup))
+        return Mono.empty()
     }
 
 }
