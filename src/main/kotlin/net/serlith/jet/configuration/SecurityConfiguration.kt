@@ -80,10 +80,11 @@ class SecurityConfiguration {
         val filter = AuthenticationWebFilter(manager).apply {
             this.setServerAuthenticationConverter(converter)
         }
-        return http.securityMatcher(
-            PathPatternParserServerWebExchangeMatcher("/api/v1/profiling/**")
-        ).authorizeExchange { exchange ->
-            exchange.anyExchange().authenticated()
+        return http.authorizeExchange { exchange ->
+            exchange.pathMatchers(
+                "/api/v1/profiling/**",
+                "/api/v1/user/**",
+            ).authenticated()
         }.csrf(
             ServerHttpSecurity.CsrfSpec::disable
         ).cors { spec ->

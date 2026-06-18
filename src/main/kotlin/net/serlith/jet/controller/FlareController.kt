@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Pattern
 import net.serlith.jet.service.ProfilingService
 import net.serlith.jet.service.SessionService
 import net.serlith.jet.service.ThumbnailService
+import net.serlith.jet.types.profiling.FlareProfileDetails
 import net.serlith.jet.util.isAlphanumeric
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.buffer.DataBuffer
@@ -37,7 +38,24 @@ class FlareController (
 
 
     @GetMapping("/profiler/{key}")
-    fun requestProfiler(
+    fun fetchProfiler(
+        request: ServerHttpRequest,
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
+    ): Mono<FlareProfileDetails.View> {
+
+        this.logger.info("Requested profile '$key' from ${request.remoteAddress}")
+        return this.profilingService.fetchProfilerByKey(key)
+            .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
+    }
+
+    @GetMapping("/profiler/encoded/{key}")
+    fun fetchProfilerEncoded(
         request: ServerHttpRequest,
 
         @PathVariable
@@ -48,7 +66,7 @@ class FlareController (
         key: String,
     ): Mono<String> {
 
-        this.logger.info("Requested profile '$key' from ${request.remoteAddress}")
+        this.logger.info("Requested profile proto '$key' from ${request.remoteAddress}")
         return this.profilingService.fetchProfilerByKeyEncoded(key)
             .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
     }
@@ -110,7 +128,7 @@ class FlareController (
     }
 
     @GetMapping("/thumbnail/{key}.png", produces = [MediaType.IMAGE_PNG_VALUE])
-    fun requestThumbnail(
+    fun fetchThumbnail(
         request: ServerHttpRequest,
 
         @PathVariable

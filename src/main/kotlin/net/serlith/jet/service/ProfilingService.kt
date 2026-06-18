@@ -2,6 +2,7 @@ package net.serlith.jet.service
 
 import net.serlith.jet.schema.Tables
 import net.serlith.jet.schema.enums.StorageType
+import net.serlith.jet.types.profiling.FlareProfileDetails
 import net.serlith.jet.types.user.FlareUserDetails
 import net.serlith.jet.util.isOne
 import org.jooq.DSLContext
@@ -116,6 +117,37 @@ class ProfilingService (
         ).map { record ->
             return@map this.encoder.encodeToString(record.raw)
         }
+    }
+
+    fun fetchProfilerByKey(
+        key: String,
+    ): Mono<FlareProfileDetails.View> {
+        return Mono.from(
+            this.dsl.select(Tables.FLARE_PROFILE.asterisk().except(Tables.FLARE_PROFILE.RAW))
+                .from(Tables.FLARE_PROFILE)
+                .where(Tables.FLARE_PROFILE.PROFILE_KEY.eq(key))
+        ).map(FlareProfileDetails.View::fromRecord)
+    }
+
+    fun fetchAllProfilersByUser(
+        user: FlareUserDetails.View,
+    ): Flux<FlareProfileDetails.View> {
+        return Flux.from(
+            this.dsl.select(Tables.FLARE_PROFILE.asterisk().except(Tables.FLARE_PROFILE.RAW))
+                .from(Tables.FLARE_PROFILE)
+                .where(Tables.FLARE_PROFILE.USER_ID.eq(user.id))
+        ).map(FlareProfileDetails.View::fromRecord)
+    }
+
+    fun deleteProfilerByKey(
+        user: FlareUserDetails.View,
+        key: String,
+    ): Mono<Boolean> {
+        return Mono.from(
+            this.dsl.deleteFrom(Tables.FLARE_PROFILE)
+                .where(Tables.FLARE_PROFILE.PROFILE_KEY.eq(key))
+                .and(Tables.FLARE_PROFILE.ID.eq(user.id))
+        ).map(Int::isOne)
     }
 
 
