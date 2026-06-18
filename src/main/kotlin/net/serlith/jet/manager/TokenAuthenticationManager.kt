@@ -1,5 +1,6 @@
 package net.serlith.jet.manager
 
+import net.serlith.jet.security.authentication.FlareUserAuthenticationToken
 import net.serlith.jet.security.authentication.KeyAuthenticationToken
 import net.serlith.jet.service.TokensService
 import org.springframework.security.authentication.BadCredentialsException
@@ -21,7 +22,7 @@ class TokenAuthenticationManager (
         val token = authentication.credentials
         return this.tokens.fetchUser(token)
             .flatMap { user ->
-                return@flatMap Mono.just(KeyAuthenticationToken(user.name, token) as Authentication)
+                return@flatMap Mono.just(FlareUserAuthenticationToken(user, token) as Authentication)
             }.switchIfEmpty(Mono.error(BadCredentialsException("Invalid token")))
     }
 
