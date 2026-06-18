@@ -129,3 +129,13 @@ sourceSets {
         java.srcDir("build/generated-src/jooq/main")
     }
 }
+
+tasks {
+    build {
+        dependsOn(generateProto)
+        dependsOn(jooqCodegen)
+    }
+    jooqCodegen {
+        dependsOn(flywayClean)
+    }
+}
