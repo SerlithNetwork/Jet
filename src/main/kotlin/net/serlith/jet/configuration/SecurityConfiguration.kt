@@ -89,7 +89,7 @@ class SecurityConfiguration {
         ).cors { spec ->
             val config = CorsConfiguration().apply {
                 this.allowedOrigins = listOf("*")
-                this.allowedMethods = listOf("POST", "GET")
+                this.allowedMethods = listOf("POST", "GET", "DELETE", "OPTIONS")
             }
 
             val source = UrlBasedCorsConfigurationSource().apply {
