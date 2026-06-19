@@ -47,5 +47,8 @@ jet:
     key:
       access: ${JET_STORAGE_S3_KEY_ACCESS:}
       secret: ${JET_STORAGE_S3_KEY_SECREY:}
+  manager:
+    username: ${JET_MANAGER_USERNAME:flare}
+    password: ${JET_MANAGER_PASSWORD:password}
 
 
