@@ -38,7 +38,7 @@ abstract class FlareUserDetails {
         override val canList: Boolean,
 
         @field:JsonProperty("created_at")
-        val createdAt: LocalDateTime,
+        override val createdAt: LocalDateTime,
     ) : FlareUserDetails(), IAudited {
 
         companion object {
