@@ -1,5 +1,6 @@
 package net.serlith.jet.types.profiling
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import net.serlith.jet.schema.Tables
 import org.jooq.Record
 import java.time.LocalDateTime
@@ -13,15 +14,34 @@ interface FlareProfileDetails {
 
     data class View(
         val key: String,
+
+        @field:JsonProperty("server_brand")
         val serverBrand: String,
+
+        @field:JsonProperty("server_version")
         val serverVersion: String,
+
+        @field:JsonProperty("os_family")
         val osFamily: String,
+
+        @field:JsonProperty("os_version")
         val osVersion: String,
+
+        @field:JsonProperty("jvm_vendor")
         val jvmVendor: String,
+
+        @field:JsonProperty("jvm_version")
         val jvmVersion: String,
+
         val storage: String,
+
+        @field:JsonProperty("data_samples")
         val dataSamples: Int,
+
+        @field:JsonProperty("timeline_samples")
         val timelineSamples: Int,
+
+        @field:JsonProperty("created_at")
         val createdAt: LocalDateTime,
     ): FlareProfileDetails {
         companion object {
