@@ -7,7 +7,7 @@ spring:
   r2dbc:
     pool:
       enabled: true
-    url: ${JET_DATABASE_URL:r2dbc:postgresql://localhost:5432/flare?ssl=require}
+    url: ${JET_DATABASE_URL:r2dbc:postgresql://localhost:5432/flare?sslmode=require}
     username: ${JET_DATABASE_USER:jet}
     password: ${JET_DATABASE_PASSWORD:}
 
@@ -50,5 +50,7 @@ jet:
   manager:
     username: ${JET_MANAGER_USERNAME:flare}
     password: ${JET_MANAGER_PASSWORD:password}
+  cors:
+    allowed-origins: ${JET_CORS_ALLOWED_ORIGINS:}
 
 

@@ -54,7 +54,7 @@ interface FlareProfileDetails {
                     osVersion = record.getValue(Tables.FLARE_PROFILE.OS_VERSION),
                     jvmVendor = record.getValue(Tables.FLARE_PROFILE.JVM_VENDOR),
                     jvmVersion = record.getValue(Tables.FLARE_PROFILE.JVM_VERSION),
-                    storage = record.getValue(Tables.FLARE_PROFILE.STORAGE).name,
+                    storage = record.getValue(Tables.FLARE_PROFILE.STORAGE),
                     dataSamples = record.getValue(Tables.FLARE_PROFILE.DATA_SAMPLES),
                     timelineSamples = record.getValue(Tables.FLARE_PROFILE.TIMELINE_SAMPLES),
                     createdAt = record.getValue(Tables.FLARE_PROFILE.CREATED_AT),

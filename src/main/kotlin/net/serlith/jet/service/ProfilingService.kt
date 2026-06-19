@@ -1,8 +1,8 @@
 package net.serlith.jet.service
 
 import net.serlith.jet.schema.Tables
-import net.serlith.jet.schema.enums.StorageType
 import net.serlith.jet.types.profiling.FlareProfileDetails
+import net.serlith.jet.types.storage.StorageType
 import net.serlith.jet.types.user.FlareUserDetails
 import net.serlith.jet.util.isOne
 import org.jooq.DSLContext
@@ -47,7 +47,7 @@ class ProfilingService (
                 .set(Tables.FLARE_PROFILE.OS_VERSION, osVersion)
                 .set(Tables.FLARE_PROFILE.JVM_VENDOR, jvmVendor)
                 .set(Tables.FLARE_PROFILE.JVM_VERSION, jvmVersion)
-                .set(Tables.FLARE_PROFILE.STORAGE, StorageType.LOCAL)
+                .set(Tables.FLARE_PROFILE.STORAGE, StorageType.LOCAL.name)
                 .set(Tables.FLARE_PROFILE.RAW, raw)
         ).map(Int::isOne)
     }
