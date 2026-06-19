@@ -19,6 +19,16 @@ class UserController (
     private val profilingService: ProfilingService,
 ) {
 
+    @GetMapping("/token")
+    fun validateToken(
+        authentication: FlareUserAuthenticationToken,
+    ): Mono<Boolean> {
+        if (!authentication.principal.canList) {
+            return Mono.error(ResponseStatusException(HttpStatus.UNAUTHORIZED))
+        }
+        return Mono.just(true)
+    }
+
     @GetMapping("/profiler")
     fun fetchProfilers(
         authentication: FlareUserAuthenticationToken,
