@@ -6,6 +6,11 @@ import java.time.LocalDateTime
 
 interface FlareProfileDetails {
 
+    data class Confirmation(
+        val id: String,
+        val key: String,
+    ): FlareProfileDetails
+
     data class View(
         val key: String,
         val serverBrand: String,

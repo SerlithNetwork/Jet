@@ -7,7 +7,7 @@ import net.serlith.jet.service.ProfilingService
 import net.serlith.jet.service.RedactionService
 import net.serlith.jet.service.SessionService
 import net.serlith.jet.service.ThumbnailService
-import net.serlith.jet.types.CreateProfileResponse
+import net.serlith.jet.types.profiling.FlareProfileDetails
 import net.serlith.jet.util.randomAlphanumeric
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -57,7 +57,7 @@ class RootController (
 
         @RequestBody
         data: ByteArray, // I don't like this, but I need the entire ByteArray
-    ): Mono<CreateProfileResponse> {
+    ): Mono<FlareProfileDetails.Confirmation> {
 
         val token = request.headers.getFirst("Authorization")!!.removePrefix("token ")
 
@@ -168,7 +168,10 @@ class RootController (
 
         }.map { key ->
             val hash = this.sha256.digest("$token:$key".toByteArray())
-            return@map CreateProfileResponse(id = key, key = hash.toHexString())
+            return@map FlareProfileDetails.Confirmation(
+                id = key,
+                key = hash.toHexString()
+            )
         }.onErrorMap { e ->
             this.logger.info("Failed to create profile for user '$user': ${e.message}")
             return@onErrorMap ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid input")
