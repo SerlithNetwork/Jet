@@ -62,7 +62,6 @@ class SecurityConfiguration {
             val config = CorsConfiguration().apply {
                 this.allowedOrigins = this@SecurityConfiguration.allowedOrigins
                 this.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                this.allowedOrigins = listOf("*")
             }
 
             val source = UrlBasedCorsConfigurationSource().apply {
@@ -89,9 +88,8 @@ class SecurityConfiguration {
             ServerHttpSecurity.CsrfSpec::disable
         ).cors { spec ->
             val config = CorsConfiguration().apply {
-                this.allowedOrigins = this@SecurityConfiguration.allowedOrigins
-                this.allowedMethods = listOf("POST", "GET")
                 this.allowedOrigins = listOf("*")
+                this.allowedMethods = listOf("POST", "GET")
             }
 
             val source = UrlBasedCorsConfigurationSource().apply {
@@ -116,7 +114,6 @@ class SecurityConfiguration {
             val config = CorsConfiguration().apply {
                 this.allowedOrigins = this@SecurityConfiguration.allowedOrigins
                 this.allowedMethods = listOf("POST", "OPTIONS")
-                this.allowedOrigins = listOf("*")
             }
 
             val source = UrlBasedCorsConfigurationSource().apply {
@@ -141,7 +138,6 @@ class SecurityConfiguration {
             val config = CorsConfiguration().apply {
                 this.allowedOrigins = this@SecurityConfiguration.allowedOrigins
                 this.allowedMethods = listOf("GET", "OPTIONS")
-                this.allowedOrigins = listOf("*")
             }
 
             val source = UrlBasedCorsConfigurationSource().apply {
