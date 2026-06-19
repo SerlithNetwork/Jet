@@ -62,6 +62,7 @@ class SecurityConfiguration {
             val config = CorsConfiguration().apply {
                 this.allowedOrigins = this@SecurityConfiguration.allowedOrigins
                 this.allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                this.allowedHeaders = listOf("*")
             }
 
             val source = UrlBasedCorsConfigurationSource().apply {
@@ -90,6 +91,7 @@ class SecurityConfiguration {
             val config = CorsConfiguration().apply {
                 this.allowedOrigins = listOf("*")
                 this.allowedMethods = listOf("POST", "GET", "DELETE", "OPTIONS")
+                this.allowedHeaders = listOf("*")
             }
 
             val source = UrlBasedCorsConfigurationSource().apply {
@@ -107,13 +109,14 @@ class SecurityConfiguration {
         return http.securityMatcher(
             PathPatternParserServerWebExchangeMatcher("/api/v1/authentication/**")
         ).authorizeExchange { exchange ->
-            exchange.anyExchange().authenticated()
+            exchange.anyExchange().permitAll()
         }.csrf(
             ServerHttpSecurity.CsrfSpec::disable
         ).cors { spec ->
             val config = CorsConfiguration().apply {
                 this.allowedOrigins = this@SecurityConfiguration.allowedOrigins
-                this.allowedMethods = listOf("POST", "OPTIONS")
+                this.allowedMethods = listOf("GET", "POST", "OPTIONS")
+                this.allowedHeaders = listOf("*")
             }
 
             val source = UrlBasedCorsConfigurationSource().apply {
@@ -138,6 +141,7 @@ class SecurityConfiguration {
             val config = CorsConfiguration().apply {
                 this.allowedOrigins = this@SecurityConfiguration.allowedOrigins
                 this.allowedMethods = listOf("GET", "OPTIONS")
+                this.allowedHeaders = listOf("*")
             }
 
             val source = UrlBasedCorsConfigurationSource().apply {
