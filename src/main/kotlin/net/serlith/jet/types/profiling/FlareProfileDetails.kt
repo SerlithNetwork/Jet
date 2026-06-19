@@ -6,7 +6,7 @@ import java.time.LocalDateTime
 
 interface FlareProfileDetails {
 
-    data class Confirmation(
+    data class Session(
         val id: String,
         val key: String,
     ): FlareProfileDetails

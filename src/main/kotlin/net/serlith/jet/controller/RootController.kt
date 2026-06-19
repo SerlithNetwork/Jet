@@ -57,7 +57,7 @@ class RootController (
 
         @RequestBody
         data: ByteArray, // I don't like this, but I need the entire ByteArray
-    ): Mono<FlareProfileDetails.Confirmation> {
+    ): Mono<FlareProfileDetails.Session> {
 
         val token = request.headers.getFirst("Authorization")!!.removePrefix("token ")
 
@@ -168,7 +168,7 @@ class RootController (
 
         }.map { key ->
             val hash = this.sha256.digest("$token:$key".toByteArray())
-            return@map FlareProfileDetails.Confirmation(
+            return@map FlareProfileDetails.Session(
                 id = key,
                 key = hash.toHexString()
             )
