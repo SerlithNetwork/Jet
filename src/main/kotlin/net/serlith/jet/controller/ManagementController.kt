@@ -1,12 +1,12 @@
 package net.serlith.jet.controller
 
 import jakarta.validation.Valid
+import net.serlith.jet.security.core.FlareManager
 import net.serlith.jet.service.TokensService
 import net.serlith.jet.types.management.FlareManagerDetails
 import net.serlith.jet.types.user.FlareUserDetails
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.annotation.AuthenticationPrincipal
-import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -29,15 +29,15 @@ class ManagementController (
     @GetMapping("/manager/self")
     fun getManagerSelf(
         @AuthenticationPrincipal
-        user: UserDetails,
+        user: FlareManager,
     ): Mono<FlareManagerDetails.View> {
-        return Mono.just(FlareManagerDetails.View(user.username))
+        return Mono.just(user.manager)
     }
 
     @GetMapping("/user")
     fun getFlareUsers(
         @AuthenticationPrincipal
-        user: UserDetails,
+        user: FlareManager,
     ): Flux<FlareUserDetails.View> {
         this.logger.info("Manager [${user.username}] is fetching all users...")
         return this.tokens.fetchUsers()
@@ -50,7 +50,7 @@ class ManagementController (
         request: FlareUserDetails.Request,
 
         @AuthenticationPrincipal
-        user: UserDetails,
+        user: FlareManager,
     ): Mono<FlareUserDetails.View> {
         this.logger.info("Manager [${user.username}] is registering a new user [${request.name}]...")
         return this.tokens.createUser(request)
@@ -66,7 +66,7 @@ class ManagementController (
         request: FlareUserDetails.Update,
 
         @AuthenticationPrincipal
-        user: UserDetails,
+        user: FlareManager,
     ): Mono<FlareUserDetails.View> {
         this.logger.info("Manager [${user.username}] is updating user with id [$id]...")
         return this.tokens.updateUser(id, request)
@@ -78,7 +78,7 @@ class ManagementController (
         id: Long,
 
         @AuthenticationPrincipal
-        user: UserDetails,
+        user: FlareManager,
     ): Mono<FlareUserDetails.View> {
         this.logger.info("Manager [${user.username}] is resetting token for user with id [$id]...")
         return this.tokens.resetUserToken(id)
@@ -90,7 +90,7 @@ class ManagementController (
         id: Long,
 
         @AuthenticationPrincipal
-        user: UserDetails,
+        user: FlareManager,
     ): Mono<Int> {
         this.logger.info("Manager [${user.username}] is deleting user with id [$id]...")
         return this.tokens.deleteUser(id)

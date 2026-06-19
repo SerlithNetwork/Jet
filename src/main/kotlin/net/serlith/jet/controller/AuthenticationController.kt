@@ -2,10 +2,10 @@ package net.serlith.jet.controller
 
 import jakarta.validation.Valid
 import net.serlith.jet.manager.PasswordAuthenticationManager
+import net.serlith.jet.security.core.FlareManager
 import net.serlith.jet.service.JwtService
 import net.serlith.jet.types.management.AuthenticationDetails
 import net.serlith.jet.types.management.AuthenticationForm
-import net.serlith.jet.types.management.FlareManagerDetails
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.server.reactive.ServerHttpRequest
@@ -46,11 +46,12 @@ class AuthenticationController (
             )
         ).flatMap { authentication ->
             return@flatMap this.users.findByUsername(authentication.name)
-                .map { user: UserDetails? ->
-                    val accessToken = this.jwts.createAccessToken(user!!)
+                .map { user: UserDetails ->
+                    user as FlareManager
+                    val accessToken = this.jwts.createAccessToken(user)
                     val refreshToken = this.jwts.createRefreshToken(user)
                     AuthenticationDetails(
-                        user = FlareManagerDetails.View(user.username),
+                        user = user.manager,
                         access = AuthenticationDetails.Entry(accessToken, this.jwts.accessLifetime.seconds),
                         refresh = AuthenticationDetails.Entry(refreshToken, this.jwts.refreshLifetime.seconds)
                     )
@@ -103,11 +104,13 @@ class AuthenticationController (
                         )
                     )
                 }
+
+                user as FlareManager
                 val accessToken = this.jwts.createAccessToken(user)
                 val refreshToken = this.jwts.createRefreshToken(user)
                 Mono.just(
                     AuthenticationDetails(
-                        user = FlareManagerDetails.View(user.username),
+                        user = user.manager,
                         access = AuthenticationDetails.Entry(accessToken, this.jwts.accessLifetime.seconds),
                         refresh = AuthenticationDetails.Entry(refreshToken, this.jwts.refreshLifetime.seconds)
                     )

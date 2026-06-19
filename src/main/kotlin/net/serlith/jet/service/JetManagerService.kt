@@ -14,7 +14,7 @@ class JetManagerService (
     fun fetchUsers(): Flux<FlareManagerDetails.View> {
         return Flux.from(
             this.dsl.selectFrom(Tables.FLARE_MANAGER)
-        ).map(FlareManagerDetails.View::fromRecord)
+        ).map(FlareManagerDetails.View::fromRecordPasswordless)
     }
 
 }

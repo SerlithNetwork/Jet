@@ -1,19 +1,20 @@
 package net.serlith.jet.manager
 
+import net.serlith.jet.security.authentication.FlareManagerAuthenticationToken
 import net.serlith.jet.security.authentication.KeyAuthenticationToken
+import net.serlith.jet.security.core.FlareManager
+import net.serlith.jet.service.JetUserDetailsService
 import net.serlith.jet.service.JwtService
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.ReactiveAuthenticationManager
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 
 @Component
 class JwtAuthenticationManager (
     private val jwts: JwtService,
-    private val users: ReactiveUserDetailsService,
+    private val users: JetUserDetailsService,
 ) : ReactiveAuthenticationManager {
 
     override fun authenticate(authentication: Authentication): Mono<Authentication> {
@@ -29,7 +30,7 @@ class JwtAuthenticationManager (
 
         return this.users.findByUsername(username)
             .filter { user -> this.jwts.areClaimsValid(claims, user) }
-            .map { user -> UsernamePasswordAuthenticationToken(user, null, user.authorities) as Authentication }
+            .map { user -> FlareManagerAuthenticationToken((user as FlareManager).manager, user.authorities) as Authentication }
             .switchIfEmpty(Mono.error(BadCredentialsException("")))
     }
 
