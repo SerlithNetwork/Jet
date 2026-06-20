@@ -47,7 +47,7 @@ abstract class FlareUserDetails {
                     id = record.id,
                     name = record.name,
                     token = record.token,
-                    canManage = record.canList,
+                    canManage = record.canManage,
                     createdAt = record.createdAt
                 )
             }
@@ -55,7 +55,7 @@ abstract class FlareUserDetails {
                 return View(
                     id = record.id,
                     name = record.name,
-                    canManage = record.canList,
+                    canManage = record.canManage,
                     createdAt = record.createdAt
                 )
             }
