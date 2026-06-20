@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS flare_profile (
     "timeline_samples" INT NOT NULL DEFAULT 0,
 
     "raw" BYTEA,
+    "refreshed_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "created_at" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_flare_user
