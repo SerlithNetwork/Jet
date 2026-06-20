@@ -41,6 +41,9 @@ interface FlareProfileDetails {
         @field:JsonProperty("timeline_samples")
         val timelineSamples: Int,
 
+        @field:JsonProperty("refreshed_at")
+        val refreshedAt: LocalDateTime,
+
         @field:JsonProperty("created_at")
         val createdAt: LocalDateTime,
     ): FlareProfileDetails {
@@ -57,6 +60,7 @@ interface FlareProfileDetails {
                     storage = record.getValue(Tables.FLARE_PROFILE.STORAGE),
                     dataSamples = record.getValue(Tables.FLARE_PROFILE.DATA_SAMPLES),
                     timelineSamples = record.getValue(Tables.FLARE_PROFILE.TIMELINE_SAMPLES),
+                    refreshedAt = record.getValue(Tables.FLARE_PROFILE.REFRESHED_AT),
                     createdAt = record.getValue(Tables.FLARE_PROFILE.CREATED_AT),
                 )
             }
