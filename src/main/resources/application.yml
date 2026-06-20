@@ -36,7 +36,10 @@ logging:
 
 jet:
   cleanup:
-    days: ${JET_CLEANUP_DAYS:30}
+    soft:
+      days: ${JET_CLEANUP_SOFT_DAYS:30}
+    hard:
+      days: ${JET_CLEANUP_HARD_DAYS:90}
   thumbnail:
     worker-threads: ${JET_THUMBNAIL_WORKER_THREADS:2}
   s3:

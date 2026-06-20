@@ -47,8 +47,8 @@ constructor(
     private val s3Client: S3AsyncClient?,
 ) {
 
-    @Value($$"${jet.cleanup.days}")
-    private var cleanupDays: Long = 0
+    @Value($$"${jet.cleanup.hard.days}")
+    private var hardCleanupDays: Long = 0
 
     @Value($$"${jet.thumbnail.worker-threads}")
     private var thumbnailWorkerThreads = 0
@@ -237,10 +237,11 @@ constructor(
             return
         }
 
-        val instant = Instant.now().minus(this.cleanupDays, ChronoUnit.DAYS)
+        val hardCleanup = Instant.now().minus(this.hardCleanupDays, ChronoUnit.DAYS)
         Files.list(this.directory).use { files ->
             for (file in files.toList()) {
-                if (Files.getLastModifiedTime(file).toInstant().isAfter(instant)) {
+                val modified = Files.getLastModifiedTime(file).toInstant()
+                if (modified.isBefore(hardCleanup)) {
                     continue
                 }
                 Files.deleteIfExists(file)

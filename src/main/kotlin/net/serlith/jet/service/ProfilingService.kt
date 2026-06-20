@@ -20,8 +20,11 @@ class ProfilingService (
     private val dsl: DSLContext,
 ) {
 
-    @Value($$"${jet.cleanup.days:30}")
-    private var cleanupDays: Long = 0
+    @Value($$"${jet.cleanup.soft.days}")
+    private var softCleanupDays: Long = 0
+
+    @Value($$"${jet.cleanup.hard.days}")
+    private var hardCleanupDays: Long = 0
 
     private final val encoder = Base64.getEncoder()
 
@@ -139,6 +142,19 @@ class ProfilingService (
         ).map(FlareProfileDetails.View::fromRecord)
     }
 
+    fun refreshProfilerByKey(
+        user: FlareUserDetails.View,
+        key: String,
+    ): Mono<FlareProfileDetails.View> {
+        return Mono.from(
+            this.dsl.update(Tables.FLARE_PROFILE)
+                .set(Tables.FLARE_PROFILE.REFRESHED_AT, LocalDateTime.now())
+                .where(Tables.FLARE_PROFILE.PROFILE_KEY.eq(key))
+                .and(Tables.FLARE_PROFILE.USER_ID.eq(user.id))
+                .returning()
+        ).map(FlareProfileDetails.View::fromRecord)
+    }
+
     fun deleteProfilerByKey(
         user: FlareUserDetails.View,
         key: String,
@@ -146,7 +162,7 @@ class ProfilingService (
         return Mono.from(
             this.dsl.deleteFrom(Tables.FLARE_PROFILE)
                 .where(Tables.FLARE_PROFILE.PROFILE_KEY.eq(key))
-                .and(Tables.FLARE_PROFILE.ID.eq(user.id))
+                .and(Tables.FLARE_PROFILE.USER_ID.eq(user.id))
         ).map(Int::isOne)
     }
 
@@ -158,10 +174,13 @@ class ProfilingService (
 
     @Scheduled(fixedRate = 1, timeUnit = TimeUnit.HOURS)
     fun purgeOldProfilers(): Mono<Void> {
-        val cleanup = LocalDateTime.now().minusDays(this.cleanupDays)
-        this.dsl.deleteFrom(Tables.FLARE_PROFILE)
-            .where(Tables.FLARE_PROFILE.CREATED_AT.eq(cleanup))
-        return Mono.empty()
+        val softCleanup = LocalDateTime.now().minusDays(this.softCleanupDays)
+        val hardCleanup = LocalDateTime.now().minusDays(this.hardCleanupDays)
+        return Flux.from(
+            this.dsl.deleteFrom(Tables.FLARE_PROFILE)
+                .where(Tables.FLARE_PROFILE.REFRESHED_AT.greaterOrEqual(softCleanup))
+                .or(Tables.FLARE_PROFILE.CREATED_AT.greaterOrEqual(hardCleanup))
+        ).collectList().then()
     }
 
 }

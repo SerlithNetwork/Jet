@@ -6,6 +6,7 @@ import net.serlith.jet.types.profiling.FlareProfileDetails
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
@@ -37,6 +38,19 @@ class UserController (
             return Flux.error(ResponseStatusException(HttpStatus.UNAUTHORIZED))
         }
         return this.profilingService.fetchAllProfilersByUser(authentication.principal)
+    }
+
+    @PatchMapping("/profiler/{key}")
+    fun refreshProfiler(
+        authentication: FlareUserAuthenticationToken,
+
+        @PathVariable
+        key: String,
+    ): Mono<FlareProfileDetails.View> {
+        if (!authentication.principal.canManage) {
+            return Mono.error(ResponseStatusException(HttpStatus.UNAUTHORIZED))
+        }
+        return this.profilingService.refreshProfilerByKey(authentication.principal, key)
     }
 
     @DeleteMapping("/profiler/{key}")
