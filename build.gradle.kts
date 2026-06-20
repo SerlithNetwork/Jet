@@ -62,6 +62,8 @@ dependencies {
     runtimeOnly("io.netty:netty-transport-native-io_uring:$nettyVersion:linux-aarch_64")
     runtimeOnly("io.netty:netty-transport-native-kqueue:$nettyVersion:osx-x86_64")
     runtimeOnly("io.netty:netty-transport-native-kqueue:$nettyVersion:osx-aarch_64")
+
+    developmentOnly("org.springframework.boot:spring-boot-starter-actuator")
 }
 
 buildscript {

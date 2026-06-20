@@ -18,6 +18,7 @@ import org.springframework.security.crypto.argon2.Argon2PasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter
+import org.springframework.security.web.server.util.matcher.OrServerWebExchangeMatcher
 import org.springframework.security.web.server.util.matcher.PathPatternParserServerWebExchangeMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource
@@ -80,11 +81,13 @@ class SecurityConfiguration {
         val filter = AuthenticationWebFilter(manager).apply {
             this.setServerAuthenticationConverter(converter)
         }
-        return http.authorizeExchange { exchange ->
-            exchange.pathMatchers(
-                "/api/v1/profiling/**",
-                "/api/v1/user/**",
-            ).authenticated()
+        return http.securityMatcher(
+            OrServerWebExchangeMatcher(
+                PathPatternParserServerWebExchangeMatcher("/api/v1/profiling/**"),
+                PathPatternParserServerWebExchangeMatcher("/api/v1/user/**"),
+            )
+        ).authorizeExchange { exchange ->
+            exchange.anyExchange().authenticated()
         }.csrf(
             ServerHttpSecurity.CsrfSpec::disable
         ).cors { spec ->
@@ -130,11 +133,13 @@ class SecurityConfiguration {
     @Bean
     @Order(4)
     fun publicChain(http: ServerHttpSecurity): SecurityWebFilterChain {
-        return http.authorizeExchange { exchange ->
-            exchange.pathMatchers(
-                "/api/v1/flare/**",
-                "/api/v1/health/**",
-            ).permitAll()
+        return http.securityMatcher(
+            OrServerWebExchangeMatcher(
+                PathPatternParserServerWebExchangeMatcher("/api/v1/flare/**"),
+                PathPatternParserServerWebExchangeMatcher("/api/v1/health/**"),
+            )
+        ).authorizeExchange { exchange ->
+            exchange.anyExchange().permitAll()
         }.csrf(
             ServerHttpSecurity.CsrfSpec::disable
         ).cors { spec ->
