@@ -23,7 +23,7 @@ class UserController (
     fun validateToken(
         authentication: FlareUserAuthenticationToken,
     ): Mono<Boolean> {
-        if (!authentication.principal.canList) {
+        if (!authentication.principal.canManage) {
             return Mono.error(ResponseStatusException(HttpStatus.UNAUTHORIZED))
         }
         return Mono.just(true)
@@ -33,7 +33,7 @@ class UserController (
     fun fetchProfilers(
         authentication: FlareUserAuthenticationToken,
     ): Flux<FlareProfileDetails.View> {
-        if (!authentication.principal.canList) {
+        if (!authentication.principal.canManage) {
             return Flux.error(ResponseStatusException(HttpStatus.UNAUTHORIZED))
         }
         return this.profilingService.fetchAllProfilersByUser(authentication.principal)
@@ -46,7 +46,7 @@ class UserController (
         @PathVariable
         key: String,
     ): Mono<Boolean> {
-        if (!authentication.principal.canList) {
+        if (!authentication.principal.canManage) {
             return Mono.error(ResponseStatusException(HttpStatus.UNAUTHORIZED))
         }
         return this.profilingService.deleteProfilerByKey(authentication.principal, key)

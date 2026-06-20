@@ -40,7 +40,7 @@ class TokensService (
             this.dsl.insertInto(Tables.FLARE_USER)
                 .set(Tables.FLARE_USER.NAME, user.name)
                 .set(Tables.FLARE_USER.TOKEN, "<placeholder>")
-                .set(Tables.FLARE_USER.CAN_LIST, user.canList)
+                .set(Tables.FLARE_USER.CAN_MANAGE, user.canManage)
                 .returning()
         ).flatMap { result ->
             val token = generateToken(result.id)
@@ -57,7 +57,7 @@ class TokensService (
         return Mono.from(
             this.dsl.update(Tables.FLARE_USER)
                 .set(Tables.FLARE_USER.NAME, user.name)
-                .set(Tables.FLARE_USER.CAN_LIST, user.canList)
+                .set(Tables.FLARE_USER.CAN_MANAGE, user.canManage)
                 .where(Tables.FLARE_USER.ID.eq(id))
                 .returning()
         ).map(FlareUserDetails.View::fromRecordTokenless)

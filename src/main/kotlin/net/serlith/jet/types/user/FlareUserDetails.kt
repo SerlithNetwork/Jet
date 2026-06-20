@@ -9,14 +9,14 @@ import java.time.LocalDateTime
 abstract class FlareUserDetails {
 
     abstract val name: String
-    abstract val canList: Boolean
+    abstract val canManage: Boolean
 
     data class Request(
         @field:Size(min = 4, max = 64, message = "Flare user display name must be at least 4 characters")
         override val name: String,
 
-        @field:JsonProperty("can_list")
-        override val canList: Boolean,
+        @field:JsonProperty("can_manage")
+        override val canManage: Boolean,
     ) : FlareUserDetails()
 
 
@@ -24,8 +24,8 @@ abstract class FlareUserDetails {
         @field:Size(min = 4, max = 64, message = "Flare user display name must be at least 4 characters")
         override val name: String,
 
-        @field:JsonProperty("can_list")
-        override val canList: Boolean,
+        @field:JsonProperty("can_manage")
+        override val canManage: Boolean,
     ) : FlareUserDetails()
 
 
@@ -34,8 +34,8 @@ abstract class FlareUserDetails {
         override val name: String,
         val token: String? = null,
 
-        @field:JsonProperty("can_list")
-        override val canList: Boolean,
+        @field:JsonProperty("can_manage")
+        override val canManage: Boolean,
 
         @field:JsonProperty("created_at")
         override val createdAt: LocalDateTime,
@@ -47,7 +47,7 @@ abstract class FlareUserDetails {
                     id = record.id,
                     name = record.name,
                     token = record.token,
-                    canList = record.canList,
+                    canManage = record.canList,
                     createdAt = record.createdAt
                 )
             }
@@ -55,7 +55,7 @@ abstract class FlareUserDetails {
                 return View(
                     id = record.id,
                     name = record.name,
-                    canList = record.canList,
+                    canManage = record.canList,
                     createdAt = record.createdAt
                 )
             }
