@@ -25,7 +25,7 @@ class TokensService (
                         .where(Tables.FLARE_USER.ID.eq(id))
                 )
             }.filter { user ->
-                return@filter this.encoder.matches(user.token, user.token)
+                return@filter this.encoder.matches(token, user.token)
             }.map(FlareUserDetails.View::fromRecordTokenless)
     }
 
