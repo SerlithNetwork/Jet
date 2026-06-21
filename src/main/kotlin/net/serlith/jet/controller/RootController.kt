@@ -167,7 +167,7 @@ class RootController (
             ).thenReturn(key)
 
         }.map { key ->
-            val hash = this.sha256.digest("$token:$key".toByteArray())
+            val hash = this.sha256.digest("${user.principal.id}:$key".toByteArray())
             return@map FlareProfileDetails.Session(
                 id = key,
                 key = hash.toHexString()
