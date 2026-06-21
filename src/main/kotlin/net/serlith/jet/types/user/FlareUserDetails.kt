@@ -42,11 +42,11 @@ abstract class FlareUserDetails {
     ) : FlareUserDetails(), IAudited {
 
         companion object {
-            fun fromRecord(record: FlareUserRecord): View {
+            fun fromRecordAndToken(record: FlareUserRecord, token: String): View {
                 return View(
                     id = record.id,
                     name = record.name,
-                    token = record.token,
+                    token = token,
                     canManage = record.canManage,
                     createdAt = record.createdAt
                 )

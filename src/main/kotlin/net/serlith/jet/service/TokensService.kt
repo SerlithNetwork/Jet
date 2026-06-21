@@ -44,13 +44,18 @@ class TokensService (
                 .returning()
         ).flatMap { result ->
             val token = generateToken(result.id)
-            return@flatMap Mono.from(
-                this.dsl.update(Tables.FLARE_USER)
-                    .set(Tables.FLARE_USER.TOKEN, token)
-                    .where(Tables.FLARE_USER.ID.eq(result.id))
-                    .returning()
+            return@flatMap Mono.zip(
+                Mono.from(
+                    this.dsl.update(Tables.FLARE_USER)
+                        .set(Tables.FLARE_USER.TOKEN, this.encoder.encode(token))
+                        .where(Tables.FLARE_USER.ID.eq(result.id))
+                        .returning()
+                ),
+                Mono.just(token),
             )
-        }.map(FlareUserDetails.View::fromRecord)
+        }.map { tuple ->
+            return@map FlareUserDetails.View.fromRecordAndToken(tuple.t1, tuple.t2)
+        }
     }
 
     fun updateUser(id: Long, user: FlareUserDetails.Update): Mono<FlareUserDetails.View> {
@@ -67,10 +72,12 @@ class TokensService (
         val token = generateToken(id)
         return Mono.from(
             this.dsl.update(Tables.FLARE_USER)
-                .set(Tables.FLARE_USER.TOKEN, token)
+                .set(Tables.FLARE_USER.TOKEN, this.encoder.encode(token))
                 .where(Tables.FLARE_USER.ID.eq(id))
                 .returning()
-        ).map(FlareUserDetails.View::fromRecord)
+        ).map { record ->
+            return@map FlareUserDetails.View.fromRecordAndToken(record, token)
+        }
     }
 
     fun deleteUser(id: Long): Mono<Int> {

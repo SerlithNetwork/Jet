@@ -26,7 +26,7 @@ class ManagersService (
                 .set(Tables.FLARE_MANAGER.USERNAME, request.username)
                 .set(Tables.FLARE_MANAGER.PASSWORD, this.encoder.encode(request.password))
                 .returning()
-        ).map(FlareManagerDetails.View::fromRecord)
+        ).map(FlareManagerDetails.View::fromRecordPasswordless)
     }
 
     fun updateManager(id: Long, request: FlareManagerDetails.Update): Mono<FlareManagerDetails.View> {
