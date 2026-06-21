@@ -12,7 +12,9 @@ private constructor(
     private val token: String,
 ): AbstractAuthenticationToken(authorities) {
 
-    constructor(principal: FlareUserDetails.View, token: String): this(listOf(), principal, token)
+    constructor(principal: FlareUserDetails.View, token: String): this(listOf(), principal, token) {
+        super.setAuthenticated(true)
+    }
 
     override fun getPrincipal(): FlareUserDetails.View = this.principal
     override fun getCredentials(): String = this.token
