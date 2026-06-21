@@ -1,12 +1,11 @@
 package net.serlith.jet.controller
 
 import jakarta.validation.Valid
-import net.serlith.jet.security.core.FlareManager
+import net.serlith.jet.security.authentication.FlareManagerAuthenticationToken
 import net.serlith.jet.service.TokensService
 import net.serlith.jet.types.management.FlareManagerDetails
 import net.serlith.jet.types.user.FlareUserDetails
 import org.slf4j.LoggerFactory
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -28,18 +27,16 @@ class ManagementController (
 
     @GetMapping("/manager/self")
     fun getManagerSelf(
-        @AuthenticationPrincipal
-        user: FlareManager,
+        user: FlareManagerAuthenticationToken,
     ): Mono<FlareManagerDetails.View> {
-        return Mono.just(user.manager)
+        return Mono.just(user.principal)
     }
 
     @GetMapping("/user")
     fun getFlareUsers(
-        @AuthenticationPrincipal
-        user: FlareManager,
+        user: FlareManagerAuthenticationToken,
     ): Flux<FlareUserDetails.View> {
-        this.logger.info("Manager [${user.username}] is fetching all users...")
+        this.logger.info("Manager [${user.principal.username}] is fetching all users...")
         return this.tokens.fetchUsers()
     }
 
@@ -49,10 +46,9 @@ class ManagementController (
         @RequestBody
         request: FlareUserDetails.Request,
 
-        @AuthenticationPrincipal
-        user: FlareManager,
+        user: FlareManagerAuthenticationToken,
     ): Mono<FlareUserDetails.View> {
-        this.logger.info("Manager [${user.username}] is registering a new user [${request.name}]...")
+        this.logger.info("Manager [${user.principal.username}] is registering a new user [${request.name}]...")
         return this.tokens.createUser(request)
     }
 
@@ -65,10 +61,9 @@ class ManagementController (
         @RequestBody
         request: FlareUserDetails.Update,
 
-        @AuthenticationPrincipal
-        user: FlareManager,
+        user: FlareManagerAuthenticationToken,
     ): Mono<FlareUserDetails.View> {
-        this.logger.info("Manager [${user.username}] is updating user with id [$id]...")
+        this.logger.info("Manager [${user.principal.username}] is updating user with id [$id]...")
         return this.tokens.updateUser(id, request)
     }
 
@@ -77,10 +72,9 @@ class ManagementController (
         @PathVariable
         id: Long,
 
-        @AuthenticationPrincipal
-        user: FlareManager,
+        user: FlareManagerAuthenticationToken,
     ): Mono<FlareUserDetails.View> {
-        this.logger.info("Manager [${user.username}] is resetting token for user with id [$id]...")
+        this.logger.info("Manager [${user.principal.username}] is resetting token for user with id [$id]...")
         return this.tokens.resetUserToken(id)
     }
 
@@ -89,10 +83,9 @@ class ManagementController (
         @PathVariable
         id: Long,
 
-        @AuthenticationPrincipal
-        user: FlareManager,
+        user: FlareManagerAuthenticationToken,
     ): Mono<Int> {
-        this.logger.info("Manager [${user.username}] is deleting user with id [$id]...")
+        this.logger.info("Manager [${user.principal.username}] is deleting user with id [$id]...")
         return this.tokens.deleteUser(id)
     }
 
