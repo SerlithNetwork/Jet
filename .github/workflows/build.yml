@@ -22,10 +22,27 @@ jobs:
         env:
           POSTGRES_USER: pgactions
           POSTGRES_PASSWORD: pgactions
-          POSTGRES_DATABASE: flare
+          POSTGRES_DB: flare
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: 'gradle'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build Jet
+        run: ./gradlew flywayClean flywayMigrate jooqCodegen generateProto build --no-daemon --stacktrace
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -56,5 +73,3 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
