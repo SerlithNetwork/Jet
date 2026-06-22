@@ -11,7 +11,6 @@ COPY build.gradle.kts ./
 COPY gradle.properties ./
 COPY gradlew ./
 RUN chmod +x gradlew
-RUN ./gradlew dependencies --no-daemon
 
 COPY src/ ./src/
 RUN --mount=type=cache,target=/home/gradle/.gradle \
