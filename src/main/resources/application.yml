@@ -7,7 +7,7 @@ spring:
   r2dbc:
     pool:
       enabled: true
-    url: ${JET_DATABASE_URL:r2dbc:h2:file:///./jetdb?options=MODE=PostgreSQL;CASE_INSENSITIVE_IDENTIFIERS=TRUE;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;LOCK_MODE=3}
+    url: ${JET_DATABASE_URL:r2dbc:postgresql://localhost:5432/flare?sslmode=require}
     username: ${JET_DATABASE_USER:jet}
     password: ${JET_DATABASE_PASSWORD:}
 
@@ -36,7 +36,10 @@ logging:
 
 jet:
   cleanup:
-    days: ${JET_CLEANUP_DAYS:30}
+    soft:
+      days: ${JET_CLEANUP_SOFT_DAYS:30}
+    hard:
+      days: ${JET_CLEANUP_HARD_DAYS:90}
   thumbnail:
     worker-threads: ${JET_THUMBNAIL_WORKER_THREADS:2}
   s3:
@@ -47,5 +50,10 @@ jet:
     key:
       access: ${JET_STORAGE_S3_KEY_ACCESS:}
       secret: ${JET_STORAGE_S3_KEY_SECREY:}
+  manager:
+    username: ${JET_MANAGER_USERNAME:flare}
+    password: ${JET_MANAGER_PASSWORD:password}
+  cors:
+    allowed-origins: ${JET_CORS_ALLOWED_ORIGINS:}
 
 

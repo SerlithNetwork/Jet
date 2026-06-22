@@ -5,12 +5,28 @@ A backend service for [Flare](https://github.com/TECHNOVE/Flare) and [flare-view
 
 ### Compiling for production
 
-Compile the project by running
+First, you need a spare database. This database will be cleared up, and used by
+Flyway to create the structure in which JOOQ will base of its auto-generated code. \
+As a recommendation, use a service database in GitHub actions to create a disposable database.
+
+Add your credentials to `gradle.properties`:
+```properties
+# Database credentials for code generation
+jet.jooq.database.url = jdbc:postgresql://localhost:5432/flare?ssl=require
+jet.jooq.database.user = pgactions
+jet.jooq.database.password = pgactions
+```
+
+Then, compile the project by running the following commands
 ````shell
+  gradlew flywayClean
+  gradlew flywayMigrate
+  gradlew jooqCodegen
+  gradlew generateProto
   gradlew build
 ````
 
-Then run it using
+Finally, find the jar in `/build/libs/` and run it using:
 ````shell
   java -jar Jet.jar
 ````

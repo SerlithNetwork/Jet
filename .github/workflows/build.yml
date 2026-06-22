@@ -14,6 +14,15 @@ jobs:
       contents: read
       packages: write
 
+    services:
+      postgresql:
+        image: postgres:18
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_USER: pgactions
+          POSTGRES_PASSWORD: pgactions
+          POSTGRES_DATABASE: flare
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5

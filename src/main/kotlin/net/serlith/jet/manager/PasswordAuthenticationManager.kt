@@ -1,0 +1,8 @@
+package net.serlith.jet.manager
+
+import org.springframework.security.authentication.UserDetailsRepositoryReactiveAuthenticationManager
+import org.springframework.security.core.userdetails.ReactiveUserDetailsService
+import org.springframework.stereotype.Component
+
+@Component
+class PasswordAuthenticationManager(users: ReactiveUserDetailsService) : UserDetailsRepositoryReactiveAuthenticationManager(users)

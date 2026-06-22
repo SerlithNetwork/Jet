@@ -13,5 +13,9 @@ import org.springframework.scheduling.annotation.EnableScheduling
 class JetApplication
 
 fun main(args: Array<String>) {
+    // Not cool jooq
+    System.setProperty("org.jooq.no-logo", "true")
+    System.setProperty("org.jooq.no-tips", "true")
+
     runApplication<JetApplication>(*args)
 }

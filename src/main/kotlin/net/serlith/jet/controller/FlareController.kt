@@ -1,11 +1,10 @@
 package net.serlith.jet.controller
 
 import jakarta.validation.constraints.Pattern
-import net.serlith.jet.database.repository.DataSampleRepository
-import net.serlith.jet.database.repository.FlareProfileRepository
-import net.serlith.jet.database.repository.TimelineSampleRepository
+import net.serlith.jet.service.ProfilingService
 import net.serlith.jet.service.SessionService
 import net.serlith.jet.service.ThumbnailService
+import net.serlith.jet.types.profiling.FlareProfileDetails
 import net.serlith.jet.util.isAlphanumeric
 import org.slf4j.LoggerFactory
 import org.springframework.core.io.buffer.DataBuffer
@@ -21,20 +20,16 @@ import org.springframework.web.server.ResponseStatusException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import java.time.Duration
-import java.util.Base64
 
 @RestController
 @RequestMapping("/api/v1/flare")
 class FlareController (
-    private val flareRepository: FlareProfileRepository,
-    private val dataRepository: DataSampleRepository,
-    private val timelineRepository: TimelineSampleRepository,
+    private val profilingService: ProfilingService,
     private val thumbnailService: ThumbnailService,
     private val sessionService: SessionService,
 ) {
 
     private final val logger = LoggerFactory.getLogger(FlareController::class.java)
-    private final val encoder = Base64.getEncoder()
     private final val delay = Duration.ofMillis(150)
 
     private final val terminate = ServerSentEvent.builder($$"flare$terminated")
@@ -43,7 +38,24 @@ class FlareController (
 
 
     @GetMapping("/profiler/{key}")
-    fun requestProfiler(
+    fun fetchProfiler(
+        request: ServerHttpRequest,
+
+        @PathVariable
+        @Pattern(
+            regexp = "[a-zA-Z0-9_]+$",
+            message = "Invalid key format"
+        )
+        key: String,
+    ): Mono<FlareProfileDetails.View> {
+
+        this.logger.info("Requested profile '$key' from ${request.remoteAddress}")
+        return this.profilingService.fetchProfilerByKey(key)
+            .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
+    }
+
+    @GetMapping("/profiler/encoded/{key}")
+    fun fetchProfilerEncoded(
         request: ServerHttpRequest,
 
         @PathVariable
@@ -54,10 +66,9 @@ class FlareController (
         key: String,
     ): Mono<String> {
 
-        this.logger.info("Requested profile '$key' from ${request.remoteAddress}")
-        return this.flareRepository.findByKey(key).map { flare ->
-            this.encoder.encodeToString(flare.raw)
-        }.switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
+        this.logger.info("Requested profile proto '$key' from ${request.remoteAddress}")
+        return this.profilingService.fetchProfilerByKeyEncoded(key)
+            .switchIfEmpty(Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
     }
 
     @GetMapping("/stream/data/{key}", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
@@ -73,25 +84,19 @@ class FlareController (
     ): Flux<ServerSentEvent<String>> {
 
         this.logger.info("Requested data stream '$key' from ${request.remoteAddress}")
-        return this.flareRepository.existsFlareProfileByKey(key).filter { exists ->
-            exists
-        }.switchIfEmpty(
-            Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
-        ).flatMapMany {
-
-            if (this.sessionService.isProfilerLive(key)) {
-                return@flatMapMany this.sessionService.loadDataFromCache(key)
-                    .map {
-                        ServerSentEvent.builder(it).build()
-                    }.concatWith(
-                        this.sessionService.getOrCreateDataStream(key).asFlux()
-                    ).delayElements(this.delay)
-            }
-
-            return@flatMapMany this.dataRepository.findAllByProfileOrderByIdAsc(key).map { sample ->
-                ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
-            }.concatWith(Flux.just(this.terminate)).delayElements(this.delay)
+        if (this.sessionService.isProfilerLive(key)) {
+            return this.sessionService.loadDataFromCache(key).map { encoded ->
+                ServerSentEvent.builder(encoded).build()
+            }.concatWith(this.sessionService.getOrCreateDataStream(key).asFlux())
+                .delayElements(this.delay)
+                .switchIfEmpty(Flux.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
         }
+
+        return this.profilingService.fetchAllSampleDataByKeyEncoded(key).map { encoded ->
+            ServerSentEvent.builder(encoded).build()
+        }.concatWith(Flux.just(this.terminate))
+            .delayElements(this.delay)
+            .switchIfEmpty(Flux.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
     }
 
     @GetMapping("/stream/timeline/{key}", produces = [MediaType.TEXT_EVENT_STREAM_VALUE])
@@ -107,29 +112,23 @@ class FlareController (
     ): Flux<ServerSentEvent<String>> {
 
         this.logger.info("Requested timeline stream '$key' from ${request.remoteAddress}")
-        return this.flareRepository.existsFlareProfileByKey(key).filter { exists ->
-            exists
-        }.switchIfEmpty(
-            Mono.error(ResponseStatusException(HttpStatus.NOT_FOUND))
-        ).flatMapMany {
-
-            if (this.sessionService.isProfilerLive(key)) {
-                return@flatMapMany this.sessionService.loadTimelineFromCache(key)
-                    .map {
-                        ServerSentEvent.builder(it).build()
-                    }.concatWith(
-                        this.sessionService.getOrCreateTimelineStream(key).asFlux()
-                    ).delayElements(this.delay)
-            }
-
-            return@flatMapMany this.timelineRepository.findAllByProfileOrderByIdAsc(key).map { sample ->
-                ServerSentEvent.builder(this.encoder.encodeToString(sample.raw)).build()
-            }.concatWith(Flux.just(this.terminate)).delayElements(this.delay)
+        if (this.sessionService.isProfilerLive(key)) {
+            return this.sessionService.loadTimelineFromCache(key).map { encoded ->
+                ServerSentEvent.builder(encoded).build()
+            }.concatWith(this.sessionService.getOrCreateTimelineStream(key).asFlux())
+                .delayElements(this.delay)
+                .switchIfEmpty(Flux.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
         }
+
+        return this.profilingService.fetchAllSampleTimelineByKeyEncoded(key).map { encoded ->
+            ServerSentEvent.builder(encoded).build()
+        }.concatWith(Flux.just(this.terminate))
+            .delayElements(this.delay)
+            .switchIfEmpty(Flux.error(ResponseStatusException(HttpStatus.NOT_FOUND)))
     }
 
     @GetMapping("/thumbnail/{key}.png", produces = [MediaType.IMAGE_PNG_VALUE])
-    fun requestThumbnail(
+    fun fetchThumbnail(
         request: ServerHttpRequest,
 
         @PathVariable
