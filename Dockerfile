@@ -8,6 +8,7 @@ COPY gradle/ ./gradle/
 COPY gradlew ./
 COPY settings.gradle.kts ./
 COPY build.gradle.kts ./
+COPY gradle.properties ./
 COPY gradlew ./
 RUN chmod +x gradlew
 RUN ./gradlew dependencies --no-daemon
