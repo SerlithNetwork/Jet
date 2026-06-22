@@ -17,12 +17,8 @@ jet.jooq.database.user = pgactions
 jet.jooq.database.password = pgactions
 ```
 
-Then, compile the project by running the following commands
+Then, compile the project by running the following command
 ````shell
-  gradlew flywayClean
-  gradlew flywayMigrate
-  gradlew jooqCodegen
-  gradlew generateProto
   gradlew build
 ````
 
