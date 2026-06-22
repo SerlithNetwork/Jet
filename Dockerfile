@@ -1,20 +1,20 @@
+# syntax=docker/dockerfile:1
 
 # Referenced from gh.com/lucko/bytebin
 FROM gradle:jdk21-corretto AS build-project
 
 WORKDIR /jet
 COPY gradle/ ./gradle/
-COPY src/ ./src/
+COPY gradlew ./
+COPY settings.gradle.kts ./
 COPY build.gradle.kts ./
 COPY gradlew ./
-COPY gradlew.bat ./
-COPY settings.gradle.kts ./
 RUN chmod +x gradlew
-RUN ./gradlew flywayClean
-RUN ./gradlew flywayMigrate
-RUN ./gradlew jooqCodegen
-RUN ./gradlew generateProto
-RUN ./gradlew build --no-daemon --stacktrace
+RUN ./gradlew dependencies --no-daemon
+
+COPY src/ ./src/
+RUN --mount=type=cache,target=/home/gradle/.gradle \
+    ./gradlew flywayClean flywayMigrate jooqCodegen generateProto build --no-daemon --stacktrace
 
 FROM eclipse-temurin:25-alpine
 
