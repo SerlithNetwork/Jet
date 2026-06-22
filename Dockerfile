@@ -9,7 +9,12 @@ COPY build.gradle.kts ./
 COPY gradlew ./
 COPY gradlew.bat ./
 COPY settings.gradle.kts ./
-RUN chmod +x gradlew && ./gradlew build --no-daemon --stacktrace
+RUN chmod +x gradlew
+RUN ./gradlew flywayClean
+RUN ./gradlew flywayMigrate
+RUN ./gradlew jooqCodegen
+RUN ./gradlew generateProto
+RUN ./gradlew build --no-daemon --stacktrace
 
 FROM eclipse-temurin:25-alpine
 

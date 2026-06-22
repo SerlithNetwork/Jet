@@ -132,16 +132,3 @@ sourceSets {
         java.srcDir("build/generated-src/jooq/main")
     }
 }
-
-tasks {
-    compileKotlin {
-        dependsOn(generateProto)
-        dependsOn(jooqCodegen)
-    }
-    jooqCodegen {
-        dependsOn(flywayMigrate)
-    }
-    flywayMigrate {
-        dependsOn(flywayClean)
-    }
-}
