@@ -241,7 +241,7 @@ constructor(
         Files.list(this.directory).use { files ->
             for (file in files.toList()) {
                 val modified = Files.getLastModifiedTime(file).toInstant()
-                if (modified.isBefore(hardCleanup)) {
+                if (modified.isAfter(hardCleanup)) {
                     continue
                 }
                 Files.deleteIfExists(file)

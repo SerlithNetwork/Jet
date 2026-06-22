@@ -178,8 +178,8 @@ class ProfilingService (
         val hardCleanup = LocalDateTime.now().minusDays(this.hardCleanupDays)
         return Flux.from(
             this.dsl.deleteFrom(Tables.FLARE_PROFILE)
-                .where(Tables.FLARE_PROFILE.REFRESHED_AT.greaterOrEqual(softCleanup))
-                .or(Tables.FLARE_PROFILE.CREATED_AT.greaterOrEqual(hardCleanup))
+                .where(Tables.FLARE_PROFILE.REFRESHED_AT.lessOrEqual(softCleanup))
+                .or(Tables.FLARE_PROFILE.CREATED_AT.lessOrEqual(hardCleanup))
         ).collectList().then()
     }
 
